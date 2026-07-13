@@ -27,6 +27,7 @@ swift build -Xswiftc -warnings-as-errors
 zsh Tests/Scripts/AppIconTests.sh
 zsh Tests/Scripts/InstallScriptTests.sh
 zsh Tests/Scripts/PackageReleaseScriptTests.sh
+zsh Tests/Scripts/PanelLayoutTests.sh
 ./scripts/build-app.sh
 ```
 

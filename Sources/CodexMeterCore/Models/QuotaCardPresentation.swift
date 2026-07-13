@@ -13,6 +13,7 @@ public struct QuotaCardPresentation: Equatable, Sendable {
     public let modelText: String
     public let percentageText: String
     public let remainingText: String
+    public let usedText: String
     public let countdownText: String
     public let resetText: String
     public let progress: Double
@@ -25,6 +26,7 @@ public struct QuotaCardPresentation: Equatable, Sendable {
         timeZone: TimeZone = .current
     ) {
         let remaining = Int(quota.percentage.rounded())
+        let used = 100 - remaining
         let countdown = QuotaFormatter.countdown(
             until: quota.resetTime,
             now: now
@@ -39,6 +41,7 @@ public struct QuotaCardPresentation: Equatable, Sendable {
         modelText = quota.model
         percentageText = "\(remaining)%"
         remainingText = "剩余 \(remaining)%"
+        usedText = "已用 \(used)%"
         countdownText = countdown
         resetText = "重置 \(resetClock)"
         progress = quota.percentage / 100
@@ -47,6 +50,7 @@ public struct QuotaCardPresentation: Equatable, Sendable {
             quota.label,
             "模型 \(quota.model)",
             "剩余 \(remaining)%",
+            "已用 \(used)%",
             quota.resetTime == nil ? nil : "距重置 \(countdown)",
             quota.resetTime == nil ? nil : "重置 \(resetClock)"
         ]
@@ -73,8 +77,13 @@ public struct StatusPanelPresentation: Equatable, Sendable {
     public let planText: String?
     public let modelText: String
     public let updatedText: String
+    public let quotaCards: [QuotaCardPresentation]
 
-    public init(snapshot: ProviderSnapshot, timeZone: TimeZone = .current) {
+    public init(
+        snapshot: ProviderSnapshot,
+        now: Date = Date(),
+        timeZone: TimeZone = .current
+    ) {
         if let account = QuotaFormatter.maskedAccount(snapshot.account) {
             accountText = account
         } else {
@@ -90,5 +99,30 @@ public struct StatusPanelPresentation: Equatable, Sendable {
         planText = snapshot.plan?.uppercased()
         modelText = snapshot.model
         updatedText = "更新于 \(QuotaFormatter.clock(for: snapshot.updatedAt, timeZone: timeZone))"
+        quotaCards = snapshot.quotas
+            .sorted(by: Self.quotaDisplayOrder)
+            .map {
+                QuotaCardPresentation(
+                    quota: $0,
+                    now: now,
+                    timeZone: timeZone
+                )
+            }
+    }
+
+    private static func quotaDisplayOrder(
+        _ lhs: QuotaStatus,
+        _ rhs: QuotaStatus
+    ) -> Bool {
+        let lhsWindow = lhs.windowDurationMinutes ?? .max
+        let rhsWindow = rhs.windowDurationMinutes ?? .max
+
+        if lhsWindow != rhsWindow {
+            return lhsWindow < rhsWindow
+        }
+        if lhs.limitID != rhs.limitID {
+            return lhs.limitID < rhs.limitID
+        }
+        return lhs.id < rhs.id
     }
 }

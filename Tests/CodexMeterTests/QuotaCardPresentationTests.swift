@@ -14,6 +14,11 @@ let quotaCardPresentation: [HarnessTest] = [
     ),
     HarnessTest(
         suite: "ui-presentation",
+        name: "Rounded used and remaining values total one hundred",
+        body: testQuotaCardRoundedTotal
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
         name: "Panel header masks account metadata",
         body: testPanelHeaderFormatting
     ),
@@ -21,6 +26,11 @@ let quotaCardPresentation: [HarnessTest] = [
         suite: "ui-presentation",
         name: "Panel header identifies API key accounts",
         body: testAPIKeyAccountFormatting
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Panel keeps and sorts every quota card",
+        body: testPanelQuotaCardOrdering
     )
 ]
 
@@ -39,12 +49,13 @@ private func testQuotaCardFormatting() {
     expectEqual(presentation.title, "5 小时额度")
     expectEqual(presentation.percentageText, "78%")
     expectEqual(presentation.remainingText, "剩余 78%")
+    expectEqual(presentation.usedText, "已用 22%")
     expectEqual(presentation.countdownText, "3h42m")
     expectEqual(presentation.resetText, "重置 03:42")
     expectEqual(presentation.progress, 0.78)
     expectEqual(
         presentation.accessibilityLabel,
-        "5 小时额度，模型 gpt-5.5，剩余 78%，距重置 3h42m，重置 03:42"
+        "5 小时额度，模型 gpt-5.5，剩余 78%，已用 22%，距重置 3h42m，重置 03:42"
     )
 }
 
@@ -58,6 +69,15 @@ private func testQuotaCardLevels() {
     expectEqual(warning.level, .warning)
     expectEqual(low.level, .low)
     expectEqual(critical.level, .critical)
+}
+
+private func testQuotaCardRoundedTotal() {
+    let presentation = QuotaCardPresentation(
+        quota: makePresentationQuota(usedPercent: 33.5)
+    )
+
+    expectEqual(presentation.usedText, "已用 33%")
+    expectEqual(presentation.remainingText, "剩余 67%")
 }
 
 private func testPanelHeaderFormatting() {
@@ -98,20 +118,78 @@ private func testAPIKeyAccountFormatting() {
     expectEqual(presentation.accountText, "API key account")
 }
 
-private func makePresentationQuota(
-    usedPercent: Double,
-    resetTime: Date? = nil
-) -> QuotaStatus {
-    QuotaStatus(
-        id: "codex.primary",
+private func testPanelQuotaCardOrdering() {
+    let quotas = [
+        makePresentationQuota(
+            id: "codex.secondary",
+            limitID: "codex",
+            label: "周额度",
+            usedPercent: 40,
+            windowDurationMinutes: 10_080
+        ),
+        makePresentationQuota(
+            id: "unknown.primary",
+            limitID: "unknown",
+            label: "额度",
+            usedPercent: 10,
+            windowDurationMinutes: nil
+        ),
+        makePresentationQuota(
+            id: "codex_spark.primary",
+            limitID: "codex_spark",
+            label: "5 小时额度",
+            usedPercent: 5,
+            windowDurationMinutes: 300
+        ),
+        makePresentationQuota(
+            id: "codex.primary",
+            limitID: "codex",
+            label: "5 小时额度",
+            usedPercent: 20,
+            windowDurationMinutes: 300
+        )
+    ]
+    let snapshot = ProviderSnapshot(
         provider: .codex,
         account: "developer@example.com",
+        plan: "pro",
         model: "gpt-5.5",
-        limitID: "codex",
-        label: "5 小时额度",
+        quotas: quotas,
+        updatedAt: Date(timeIntervalSince1970: 500)
+    )
+
+    let presentation = StatusPanelPresentation(snapshot: snapshot)
+
+    expectEqual(
+        presentation.quotaCards.map(\.id),
+        [
+            "codex.primary",
+            "codex_spark.primary",
+            "codex.secondary",
+            "unknown.primary"
+        ]
+    )
+}
+
+private func makePresentationQuota(
+    id: String = "codex.primary",
+    limitID: String = "codex",
+    label: String = "5 小时额度",
+    model: String = "gpt-5.5",
+    usedPercent: Double,
+    resetTime: Date? = nil,
+    windowDurationMinutes: Int? = 300
+) -> QuotaStatus {
+    QuotaStatus(
+        id: id,
+        provider: .codex,
+        account: "developer@example.com",
+        model: model,
+        limitID: limitID,
+        label: label,
         usedPercent: usedPercent,
         resetTime: resetTime,
-        windowDurationMinutes: 300,
+        windowDurationMinutes: windowDurationMinutes,
         updatedAt: Date(timeIntervalSince1970: 500)
     )
 }
