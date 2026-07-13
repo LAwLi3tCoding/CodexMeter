@@ -9,13 +9,33 @@ let quotaCardPresentation: [HarnessTest] = [
     ),
     HarnessTest(
         suite: "ui-presentation",
-        name: "Quota card assigns semantic levels",
-        body: testQuotaCardLevels
+        name: "Quota card keeps exact levels while displaying conservative integers",
+        body: testQuotaCardLevelsAndDisplayedPercentages
     ),
     HarnessTest(
         suite: "ui-presentation",
         name: "Rounded used and remaining values total one hundred",
         body: testQuotaCardRoundedTotal
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Empty quota gauge exposes ten empty segments",
+        body: testQuotaGaugeAtZero
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Quota gauge exposes a partially filled segment",
+        body: testQuotaGaugePartialSegment
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Quota gauge preserves an exact segment boundary",
+        body: testQuotaGaugeBoundary
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Full quota gauge exposes ten filled segments",
+        body: testQuotaGaugeAtOneHundred
     ),
     HarnessTest(
         suite: "ui-presentation",
@@ -59,16 +79,20 @@ private func testQuotaCardFormatting() {
     )
 }
 
-private func testQuotaCardLevels() {
+private func testQuotaCardLevelsAndDisplayedPercentages() {
     let healthy = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 50))
     let warningBelowFifty = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 50.1))
     let warningAtTwenty = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 80))
     let criticalBelowTwenty = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 80.1))
 
     expectEqual(healthy.level, .healthy)
+    expectEqual(healthy.percentageText, "50%")
     expectEqual(warningBelowFifty.level, .warning)
+    expectEqual(warningBelowFifty.percentageText, "49%")
     expectEqual(warningAtTwenty.level, .warning)
+    expectEqual(warningAtTwenty.percentageText, "20%")
     expectEqual(criticalBelowTwenty.level, .critical)
+    expectEqual(criticalBelowTwenty.percentageText, "19%")
 }
 
 private func testQuotaCardRoundedTotal() {
@@ -76,8 +100,48 @@ private func testQuotaCardRoundedTotal() {
         quota: makePresentationQuota(usedPercent: 33.5)
     )
 
-    expectEqual(presentation.usedText, "已用 33%")
-    expectEqual(presentation.remainingText, "剩余 67%")
+    expectEqual(presentation.usedText, "已用 34%")
+    expectEqual(presentation.remainingText, "剩余 66%")
+}
+
+private func testQuotaGaugeAtZero() {
+    let presentation = QuotaCardPresentation(
+        quota: makePresentationQuota(usedPercent: 100)
+    )
+
+    expectEqual(presentation.segmentFillAmounts.count, 10)
+    expectEqual(presentation.segmentFillAmounts, Array(repeating: 0, count: 10))
+}
+
+private func testQuotaGaugePartialSegment() {
+    let presentation = QuotaCardPresentation(
+        quota: makePresentationQuota(usedPercent: 35)
+    )
+
+    expectEqual(
+        presentation.segmentFillAmounts,
+        [1, 1, 1, 1, 1, 1, 0.5, 0, 0, 0]
+    )
+}
+
+private func testQuotaGaugeBoundary() {
+    let presentation = QuotaCardPresentation(
+        quota: makePresentationQuota(usedPercent: 80)
+    )
+
+    expectEqual(
+        presentation.segmentFillAmounts,
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+    )
+}
+
+private func testQuotaGaugeAtOneHundred() {
+    let presentation = QuotaCardPresentation(
+        quota: makePresentationQuota(usedPercent: 0)
+    )
+
+    expectEqual(presentation.segmentFillAmounts.count, 10)
+    expectEqual(presentation.segmentFillAmounts, Array(repeating: 1, count: 10))
 }
 
 private func testPanelHeaderFormatting() {

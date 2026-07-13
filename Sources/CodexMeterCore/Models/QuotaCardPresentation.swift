@@ -16,6 +16,7 @@ public struct QuotaCardPresentation: Equatable, Sendable {
     public let countdownText: String
     public let resetText: String
     public let progress: Double
+    public let segmentFillAmounts: [Double]
     public let level: QuotaLevel
     public let accessibilityLabel: String
 
@@ -24,8 +25,9 @@ public struct QuotaCardPresentation: Equatable, Sendable {
         now: Date = Date(),
         timeZone: TimeZone = .current
     ) {
-        let remaining = Int(quota.percentage.rounded())
+        let remaining = Int(quota.percentage.rounded(.down))
         let used = 100 - remaining
+        let normalizedProgress = min(max(quota.percentage / 100, 0), 1)
         let countdown = QuotaFormatter.countdown(
             until: quota.resetTime,
             now: now
@@ -43,7 +45,10 @@ public struct QuotaCardPresentation: Equatable, Sendable {
         usedText = "已用 \(used)%"
         countdownText = countdown
         resetText = "重置 \(resetClock)"
-        progress = quota.percentage / 100
+        progress = normalizedProgress
+        segmentFillAmounts = (0..<10).map { index in
+            min(max((normalizedProgress * 10) - Double(index), 0), 1)
+        }
         level = Self.level(for: quota.percentage)
         accessibilityLabel = [
             quota.label,

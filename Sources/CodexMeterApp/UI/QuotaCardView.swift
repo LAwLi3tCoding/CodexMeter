@@ -44,7 +44,7 @@ struct QuotaCardView: View {
             }
 
             SegmentedQuotaGauge(
-                progress: presentation.progress,
+                fillAmounts: presentation.segmentFillAmounts,
                 tint: accentColor
             )
                 .animation(
@@ -120,21 +120,19 @@ struct QuotaCardView: View {
 }
 
 private struct SegmentedQuotaGauge: View {
-    let progress: Double
+    let fillAmounts: [Double]
     let tint: Color
-
-    private let segmentCount = 10
 
     var body: some View {
         HStack(spacing: 3) {
-            ForEach(0..<segmentCount, id: \.self) { index in
+            ForEach(fillAmounts.indices, id: \.self) { index in
                 GeometryReader { proxy in
                     Capsule()
                         .fill(Color.primary.opacity(0.09))
                         .overlay(alignment: .leading) {
                             Capsule()
                                 .fill(tint)
-                                .frame(width: proxy.size.width * fillAmount(for: index))
+                                .frame(width: proxy.size.width * fillAmounts[index])
                         }
                 }
                 .frame(height: 7)
@@ -142,9 +140,5 @@ private struct SegmentedQuotaGauge: View {
         }
         .frame(height: 7)
         .accessibilityHidden(true)
-    }
-
-    private func fillAmount(for index: Int) -> Double {
-        min(max((progress * Double(segmentCount)) - Double(index), 0), 1)
     }
 }
