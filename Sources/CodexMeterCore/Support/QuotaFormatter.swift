@@ -22,8 +22,10 @@ public enum QuotaFormatter {
     public static func countdown(until resetTime: Date?, now: Date = Date()) -> String {
         guard let resetTime else { return "—" }
 
-        let remainingSeconds = Int(resetTime.timeIntervalSince(now))
-        guard remainingSeconds > 0 else { return "即将重置" }
+        let remainingInterval = resetTime.timeIntervalSince(now)
+        guard remainingInterval > 0 else { return "即将重置" }
+
+        let remainingSeconds = Int(remainingInterval)
 
         let days = remainingSeconds / 86_400
         let hours = (remainingSeconds % 86_400) / 3_600
