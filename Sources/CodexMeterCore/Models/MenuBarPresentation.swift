@@ -1,6 +1,7 @@
 import Foundation
 
 public struct MenuBarPresentation: Equatable, Sendable {
+    public let brandText: String
     public let percentageText: String
     public let countdownText: String?
     public let labelText: String
@@ -8,12 +9,14 @@ public struct MenuBarPresentation: Equatable, Sendable {
     public let systemImageName: String
 
     public init(quotas: [QuotaStatus], now: Date = Date()) {
+        brandText = "Codex"
+        systemImageName = "gauge.medium"
+
         guard let quota = quotas.min(by: Self.isMoreConstrained) else {
             percentageText = "--"
             countdownText = nil
             labelText = "--"
             accessibilityLabel = "Codex 额度暂不可用"
-            systemImageName = "bolt.circle"
             return
         }
 
@@ -35,7 +38,6 @@ public struct MenuBarPresentation: Equatable, Sendable {
         } else {
             "Codex 剩余 \(remaining)%"
         }
-        systemImageName = remaining <= 10 ? "exclamationmark.bolt.fill" : "bolt.circle.fill"
     }
 
     private static func isMoreConstrained(_ lhs: QuotaStatus, _ rhs: QuotaStatus) -> Bool {

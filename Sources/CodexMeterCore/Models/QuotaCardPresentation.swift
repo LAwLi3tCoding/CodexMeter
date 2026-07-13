@@ -3,7 +3,6 @@ import Foundation
 public enum QuotaLevel: Equatable, Sendable {
     case healthy
     case warning
-    case low
     case critical
 }
 
@@ -60,11 +59,9 @@ public struct QuotaCardPresentation: Equatable, Sendable {
 
     private static func level(for percentage: Double) -> QuotaLevel {
         switch percentage {
-        case ...10:
+        case ..<20:
             return .critical
-        case ...30:
-            return .low
-        case ...50:
+        case ..<50:
             return .warning
         default:
             return .healthy

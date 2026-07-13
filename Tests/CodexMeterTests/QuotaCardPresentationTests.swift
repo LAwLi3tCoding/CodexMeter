@@ -60,15 +60,15 @@ private func testQuotaCardFormatting() {
 }
 
 private func testQuotaCardLevels() {
-    let healthy = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 20))
-    let warning = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 55))
-    let low = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 75))
-    let critical = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 92))
+    let healthy = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 50))
+    let warningBelowFifty = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 50.1))
+    let warningAtTwenty = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 80))
+    let criticalBelowTwenty = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 80.1))
 
     expectEqual(healthy.level, .healthy)
-    expectEqual(warning.level, .warning)
-    expectEqual(low.level, .low)
-    expectEqual(critical.level, .critical)
+    expectEqual(warningBelowFifty.level, .warning)
+    expectEqual(warningAtTwenty.level, .warning)
+    expectEqual(criticalBelowTwenty.level, .critical)
 }
 
 private func testQuotaCardRoundedTotal() {
