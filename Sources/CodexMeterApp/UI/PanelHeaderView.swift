@@ -19,7 +19,7 @@ struct PanelHeaderView: View {
                     Text("CodexMeter")
                         .font(.title3.weight(.semibold))
 
-                    Text("Codex 使用额度")
+                    Text("Codex Usage Dashboard")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -36,26 +36,22 @@ struct PanelHeaderView: View {
                 }
             }
 
-            Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 7) {
-                GridRow {
-                    MetadataLabel(
-                        symbol: "person.crop.circle",
-                        text: presentation?.accountText ?? "Codex 账号"
-                    )
-                    MetadataLabel(
-                        symbol: "cpu",
-                        text: presentation?.modelText ?? "Codex"
-                    )
-                }
-
-                GridRow {
-                    MetadataLabel(
-                        symbol: "clock",
-                        text: presentation?.updatedText ?? "尚未更新"
-                    )
-                    .gridCellColumns(2)
-                }
+            HStack(alignment: .top, spacing: 8) {
+                MetadataItem(
+                    label: "ACCOUNT",
+                    value: presentation?.accountText ?? "Codex 账号"
+                )
+                MetadataItem(
+                    label: "MODEL",
+                    value: presentation?.modelText ?? "Codex"
+                )
+                MetadataItem(
+                    label: "UPDATED",
+                    value: presentation?.updatedText ?? "尚未更新"
+                )
             }
+            .padding(10)
+            .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
             if let staleFailure {
                 Label {
@@ -73,15 +69,25 @@ struct PanelHeaderView: View {
     }
 }
 
-private struct MetadataLabel: View {
-    let symbol: String
-    let text: String
+private struct MetadataItem: View {
+    let label: String
+    let value: String
 
     var body: some View {
-        Label(text, systemImage: symbol)
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        VStack(alignment: .leading, spacing: 3) {
+            Text(label)
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(.tertiary)
+                .tracking(0.6)
+
+            Text(value)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .help(value)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(label), \(value)")
     }
 }

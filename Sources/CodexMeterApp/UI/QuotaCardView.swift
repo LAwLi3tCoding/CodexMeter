@@ -34,7 +34,7 @@ struct QuotaCardView: View {
 
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(presentation.percentageText)
-                    .font(.system(size: 30, weight: .semibold, design: .rounded))
+                    .font(.system(size: 32, weight: .semibold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(accentColor)
 
@@ -43,10 +43,10 @@ struct QuotaCardView: View {
                     .foregroundStyle(.secondary)
             }
 
-            ProgressView(value: presentation.progress)
-                .progressViewStyle(.linear)
-                .controlSize(.small)
-                .tint(accentColor)
+            SegmentedQuotaGauge(
+                progress: presentation.progress,
+                tint: accentColor
+            )
                 .animation(
                     reduceMotion ? nil : .easeInOut(duration: 0.22),
                     value: presentation.progress
@@ -71,6 +71,10 @@ struct QuotaCardView: View {
         .background {
             RoundedRectangle(cornerRadius: 15, style: .continuous)
                 .fill(Color(nsColor: .controlBackgroundColor))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 15, style: .continuous)
+                        .fill(accentColor.opacity(0.055))
+                }
         }
         .overlay {
             RoundedRectangle(cornerRadius: 15, style: .continuous)
@@ -84,8 +88,8 @@ struct QuotaCardView: View {
     private var accentColor: Color {
         switch presentation.level {
         case .healthy:
-            return .accentColor
-        case .warning, .low:
+            return .green
+        case .warning:
             return .orange
         case .critical:
             return .red
@@ -98,7 +102,7 @@ struct QuotaCardView: View {
             return differentiateWithoutColor ? "checkmark.circle.fill" : "circle.fill"
         case .warning:
             return "exclamationmark.circle.fill"
-        case .low, .critical:
+        case .critical:
             return "exclamationmark.triangle.fill"
         }
     }
@@ -109,10 +113,38 @@ struct QuotaCardView: View {
             return "额度充足"
         case .warning:
             return "额度低于一半"
-        case .low:
-            return "额度偏低"
         case .critical:
             return "额度即将用尽"
         }
+    }
+}
+
+private struct SegmentedQuotaGauge: View {
+    let progress: Double
+    let tint: Color
+
+    private let segmentCount = 10
+
+    var body: some View {
+        HStack(spacing: 3) {
+            ForEach(0..<segmentCount, id: \.self) { index in
+                GeometryReader { proxy in
+                    Capsule()
+                        .fill(Color.primary.opacity(0.09))
+                        .overlay(alignment: .leading) {
+                            Capsule()
+                                .fill(tint)
+                                .frame(width: proxy.size.width * fillAmount(for: index))
+                        }
+                }
+                .frame(height: 7)
+            }
+        }
+        .frame(height: 7)
+        .accessibilityHidden(true)
+    }
+
+    private func fillAmount(for index: Int) -> Double {
+        min(max((progress * Double(segmentCount)) - Double(index), 0), 1)
     }
 }

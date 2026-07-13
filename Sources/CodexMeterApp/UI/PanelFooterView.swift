@@ -8,12 +8,18 @@ struct PanelFooterView: View {
     var body: some View {
         HStack(spacing: 12) {
             Toggle(
-                "自动刷新",
                 isOn: Binding(
                     get: { store.autoRefreshEnabled },
                     set: store.setAutoRefreshEnabled
                 )
-            )
+            ) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("自动刷新")
+                    Text("每 1 分钟")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
             .toggleStyle(.switch)
             .controlSize(.small)
 

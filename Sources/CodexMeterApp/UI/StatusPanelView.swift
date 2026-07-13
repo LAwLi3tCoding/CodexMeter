@@ -13,25 +13,38 @@ struct StatusPanelView: View {
     var body: some View {
         let presentation = panelPresentation
 
-        VStack(spacing: 0) {
+        VStack(spacing: 10) {
             PanelHeaderView(
                 presentation: presentation,
                 staleFailure: store.snapshot == nil ? nil : store.failure
             )
-            .padding(16)
-
-            Divider()
+            .padding(14)
+            .background {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(nsColor: .controlBackgroundColor))
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+            }
 
             statusContent(presentation: presentation)
-                .padding(14)
-
-            Divider()
 
             PanelFooterView(store: store)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 9)
+                .background {
+                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                }
+                .overlay {
+                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                }
         }
-        .frame(width: 448)
+        .padding(10)
+        .frame(width: 464)
+        .background(Color(nsColor: .windowBackgroundColor))
         .fixedSize(horizontal: false, vertical: true)
     }
 
