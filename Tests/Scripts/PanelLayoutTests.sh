@@ -12,7 +12,7 @@ fail() {
   exit 1
 }
 
-if grep -Eq 'ScrollView|List\s*\{|DisclosureGroup|\.frame\(maxHeight:' "$PANEL_FILE"; then
+if grep -Eq 'ScrollView|List[[:space:]]*[({]|DisclosureGroup|maxHeight[[:space:]]*:' "$PANEL_FILE"; then
   fail "status panel must expose every quota without scrolling, disclosure, or a height cap"
 fi
 
