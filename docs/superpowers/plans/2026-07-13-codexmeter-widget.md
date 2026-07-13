@@ -4,9 +4,9 @@
 
 **Goal:** Restore the menu-bar percentage, render reset countdowns with `d/h/m`, and ship a native privacy-safe macOS WidgetKit extension.
 
-**Architecture:** The menu app remains the only process that talks to Codex. Successful `QuotaStore` refreshes publish a versioned snapshot to App Group `UserDefaults`, then request a WidgetKit reload; the extension reads that snapshot and renders small and medium family-specific views from shared Core presentation logic.
+**Architecture:** The menu app remains the only process that talks to Codex. Successful `QuotaStore` refreshes publish a versioned atomic JSON snapshot to CodexMeter's Application Support directory, then request a WidgetKit reload; the sandboxed extension has read-only access to that snapshot and renders small and medium family-specific views from shared Core presentation logic.
 
-**Tech Stack:** Swift 5, SwiftUI, WidgetKit, Combine, Foundation, Swift Package Manager, zsh bundle/signing scripts, App Group UserDefaults.
+**Tech Stack:** Swift 5, SwiftUI, WidgetKit, Combine, Foundation, Swift Package Manager, zsh bundle/signing scripts, atomic Application Support storage.
 
 ## Global Constraints
 
@@ -25,14 +25,14 @@
 - `Sources/CodexMeterCore/Models/MenuBarPresentation.swift`: combined status-item copy.
 - `Sources/CodexMeterCore/Support/QuotaFormatter.swift`: `d/h/m` countdown decomposition.
 - `Sources/CodexMeterCore/Models/WidgetQuotaSnapshot.swift`: versioned privacy-minimal DTO and domain conversion.
-- `Sources/CodexMeterCore/Storage/WidgetSnapshotStore.swift`: App Group JSON persistence and publisher protocol.
+- `Sources/CodexMeterCore/Storage/WidgetSnapshotStore.swift`: atomic Application Support JSON persistence and publisher protocol.
 - `Sources/CodexMeterCore/Models/WidgetQuotaPresentation.swift`: family-independent widget display data and freshness.
 - `Sources/CodexMeterCore/Support/WidgetTimelinePolicy.swift`: deterministic five-minute timeline dates.
 - `Sources/CodexMeterCore/State/QuotaStore.swift`: successful-refresh publication hook.
-- `Sources/CodexMeterApp/Services/WidgetSnapshotPublisher.swift`: App Group write plus WidgetCenter reload.
+- `Sources/CodexMeterApp/Services/WidgetSnapshotPublisher.swift`: shared-file write plus WidgetCenter reload.
 - `Sources/CodexMeterWidget/*`: WidgetBundle, provider, and small/medium SwiftUI views.
-- `Resources/CodexMeter.entitlements`: containing-app App Group entitlement.
-- `Resources/CodexMeterWidget.entitlements`: sandboxed extension App Group entitlement.
+- `Resources/CodexMeter.entitlements`: containing-app signing policy without sandboxing.
+- `Resources/CodexMeterWidget.entitlements`: sandboxed extension with a read-only CodexMeter Application Support exception.
 - `Resources/CodexMeterWidget-Info.plist`: native WidgetKit extension metadata.
 - `scripts/build-app.sh`: build, assemble, and nested-sign `.appex`.
 - `scripts/package-release.sh` and `scripts/install.sh`: reject malformed extension artifacts.
@@ -135,7 +135,7 @@ git commit -m "fix: restore menu bar quota status"
 - Modify: `Tests/CodexMeterTests/TestRegistry.swift`
 
 **Interfaces:**
-- Produces: `WidgetConfiguration.appGroupID`, `snapshotKey`, and `widgetKind`.
+- Produces: `WidgetConfiguration.snapshotKey`, `snapshotFileName`, and `widgetKind`.
 - Produces: `WidgetQuotaSnapshot.init(snapshot:)`, `WidgetSnapshotStore.read()`, and `write(_:)`.
 - Produces: `WidgetQuotaPresentation.init(snapshot:now:)` and `WidgetTimelinePolicy.entryDates(start:)`.
 
@@ -167,8 +167,8 @@ Define exact constants and DTO fields:
 
 ```swift
 public enum WidgetConfiguration {
-    public static let appGroupID = "group.com.codexmeter.CodexMeter"
     public static let snapshotKey = "widget.quota.snapshot.v1"
+    public static let snapshotFileName = "quota-snapshot-v1.json"
     public static let widgetKind = "com.codexmeter.CodexMeter.quota-widget"
 }
 
@@ -182,7 +182,7 @@ public struct WidgetQuotaItem: Codable, Equatable, Sendable {
 }
 ```
 
-`WidgetSnapshotStore` must accept injected `UserDefaults`, encode dates as milliseconds since 1970, reject unsupported schema versions, and never delete valid data after a failed write.
+`WidgetSnapshotStore` must accept injected `UserDefaults` for deterministic tests and an injected file URL for production-style tests, encode dates as milliseconds since 1970, reject unsupported schema versions, and never delete valid data after a failed write. Production uses a mode-`0600` atomic JSON file in CodexMeter's Application Support directory.
 
 - [ ] **Step 4: Write failing widget presentation and timeline tests**
 
@@ -334,7 +334,7 @@ Expected: `CodexMeterWidget` links as a Mach-O executable without warnings.
 
 - [ ] **Step 3: Implement TimelineProvider**
 
-Use `WidgetSnapshotStore.appGroup()` for production reads. Placeholder uses a fixed two-quota sample; snapshot and timeline read current cached data. Timeline maps `WidgetTimelinePolicy.entryDates(start:)` into entries and returns `.after(lastDate)`.
+Use `WidgetSnapshotStore.sharedApplicationSupport()` for production reads. Placeholder uses a fixed two-quota sample; snapshot and timeline read current cached data. Timeline maps `WidgetTimelinePolicy.entryDates(start:)` into entries and returns `.after(lastDate)`.
 
 - [ ] **Step 4: Implement small and medium SwiftUI views**
 
@@ -395,7 +395,7 @@ Expected: failures report the missing widget bundle validation.
 
 The extension plist must declare `CFBundlePackageType = XPC!`, executable `CodexMeterWidget`, identifier `com.codexmeter.CodexMeter.Widget`, matching `0.1.0 (1)`, minimum macOS 13, and `NSExtensionPointIdentifier = com.apple.widgetkit-extension`.
 
-Both entitlement files declare `group.com.codexmeter.CodexMeter`; only the widget entitlement also declares `com.apple.security.app-sandbox = true`.
+The containing app remains unsandboxed. The widget entitlement declares `com.apple.security.app-sandbox = true` plus the exact home-relative read-only path `/Library/Application Support/CodexMeter/`.
 
 - [ ] **Step 4: Assemble and sign nested code in the correct order**
 
@@ -471,7 +471,7 @@ Expected: nested signature passes and pluginkit lists exactly one enabled CodexM
 
 - [ ] **Step 4: Perform visual and runtime smoke checks**
 
-Confirm the status item displays `Codex <percentage>%`, the panel still shows all quota cards without scrolling, a fresh shared snapshot exists in the App Group suite, and a captured app-window screenshot contains both quota cards.
+Confirm the status item displays `Codex <percentage>%`, the panel still shows all quota cards without scrolling, a fresh mode-`0600` snapshot exists in CodexMeter's Application Support directory, and a captured app-window screenshot contains both quota cards.
 
 - [ ] **Step 5: Commit, push, and verify the existing PR**
 

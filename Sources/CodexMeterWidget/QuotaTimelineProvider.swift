@@ -49,12 +49,7 @@ struct QuotaTimelineProvider: TimelineProvider {
     }
 
     private static func loadSnapshot() -> WidgetQuotaSnapshot? {
-        guard let defaults = UserDefaults(
-            suiteName: CodexMeterCore.WidgetConfiguration.appGroupID
-        ) else {
-            return nil
-        }
-        return WidgetSnapshotStore(defaults: defaults).read()
+        WidgetSnapshotStore.sharedApplicationSupport()?.read()
     }
 
     private static func placeholderSnapshot(now: Date) -> WidgetQuotaSnapshot {

@@ -50,7 +50,7 @@ CodexProvider -> QuotaStore
       | successful refresh only
       v
 WidgetSnapshotPublisher
-      | JSON in App Group UserDefaults
+      | Atomic JSON in Application Support
       +------------------------------+
       |                              |
 WidgetCenter.reloadTimelines         |
@@ -73,7 +73,7 @@ public struct WidgetQuotaSnapshot: Codable, Equatable, Sendable {
 }
 ```
 
-Each item includes only `id`, `label`, `model`, `remainingPercent`, `resetTime`, and `windowDurationMinutes`. `WidgetSnapshotStore` reads and writes JSON under the App Group suite. Missing, corrupt, or unsupported-version data produces the widget's empty state. Failed quota fetches never replace the last successful shared snapshot.
+Each item includes only `id`, `label`, `model`, `remainingPercent`, `resetTime`, and `windowDurationMinutes`. `WidgetSnapshotStore` atomically reads and writes JSON inside `~/Library/Application Support/CodexMeter/` with file mode `0600`. Missing, corrupt, or unsupported-version data produces the widget's empty state. Failed quota fetches never replace the last successful shared snapshot.
 
 ### Process boundaries
 
@@ -81,14 +81,14 @@ Each item includes only `id`, `label`, `model`, `remainingPercent`, `resetTime`,
 - `CodexMeterApp` owns Codex CLI process lifecycle and the `WidgetCenter` reload bridge.
 - `CodexMeterWidget` only reads the shared snapshot. It never starts Codex CLI, accesses Keychain, or performs network requests.
 
-### App Group and identifiers
+### Bundle identifiers and shared-file access
 
 - App bundle: `com.codexmeter.CodexMeter`
 - Widget bundle: `com.codexmeter.CodexMeter.Widget`
 - Widget kind: `com.codexmeter.CodexMeter.quota-widget`
-- App Group: `group.com.codexmeter.CodexMeter`
+- Snapshot path: `~/Library/Application Support/CodexMeter/quota-snapshot-v1.json`
 
-Both app and extension carry the App Group entitlement. The main app stays outside App Sandbox because it must launch the user's Codex executable. The widget extension is sandboxed.
+The main app stays outside App Sandbox because it must launch the user's Codex executable. The widget extension is sandboxed and receives a narrow home-relative read-only file exception for `/Library/Application Support/CodexMeter/`. This avoids App Group container failures in ad-hoc GitHub builds that do not carry an Apple development team identity. The exception is intentionally read-only and the shared JSON excludes account identifiers and credentials.
 
 ## Widget visual design
 

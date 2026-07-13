@@ -32,8 +32,8 @@ grep -Fq '.fixedSize(horizontal: false, vertical: true)' "$PANEL_FILE" \
   || fail "status panel must grow vertically to expose every quota"
 grep -Fq 'ForEach(presentation.quotaCards, id: \.id)' "$PANEL_FILE" \
   || fail "status panel must render every prepared quota card"
-grep -Fq 'Text(presentation.brandText)' "$MENU_BAR_FILE" \
-  || fail "menu bar must identify Codex"
+grep -Fq 'Text(presentation.displayText)' "$MENU_BAR_FILE" \
+  || fail "menu bar must keep Codex and its quota in one status text"
 grep -Fq '.monospacedDigit()' "$MENU_BAR_FILE" \
   || fail "menu bar values must not jitter"
 grep -Fq 'fillAmounts: presentation.segmentFillAmounts' "$QUOTA_CARD_FILE" \

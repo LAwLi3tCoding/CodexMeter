@@ -52,29 +52,39 @@ plist_value() {
 [[ "$(plist_value "$WIDGET_INFO" NSExtension.NSExtensionPointIdentifier)" == "com.apple.widgetkit-extension" ]] \
   || fail "widget extension point is invalid"
 
-[[ "$(plist_value "$APP_ENTITLEMENTS" 'com\.apple\.security\.application-groups.0')" == "group.com.codexmeter.CodexMeter" ]] \
-  || fail "app entitlement does not include the shared app group"
 if plist_value "$APP_ENTITLEMENTS" 'com\.apple\.security\.app-sandbox' >/dev/null; then
   fail "app entitlement must not enable the app sandbox"
 fi
-[[ "$(plist_value "$WIDGET_ENTITLEMENTS" 'com\.apple\.security\.application-groups.0')" == "group.com.codexmeter.CodexMeter" ]] \
-  || fail "widget entitlement does not include the shared app group"
 [[ "$(plist_value "$WIDGET_ENTITLEMENTS" 'com\.apple\.security\.app-sandbox')" == "true" ]] \
   || fail "widget entitlement does not enable the app sandbox"
+[[ "$(plist_value "$WIDGET_ENTITLEMENTS" 'com\.apple\.security\.temporary-exception\.files\.home-relative-path\.read-only.0')" == "/Library/Application Support/CodexMeter/" ]] \
+  || fail "widget entitlement does not restrict shared snapshot access to CodexMeter Application Support"
+if plist_value "$WIDGET_ENTITLEMENTS" 'com\.apple\.security\.temporary-exception\.files\.home-relative-path\.read-only.1' >/dev/null \
+  || plist_value "$WIDGET_ENTITLEMENTS" 'com\.apple\.security\.temporary-exception\.files\.home-relative-path\.read-write' >/dev/null \
+  || plist_value "$WIDGET_ENTITLEMENTS" 'com\.apple\.security\.temporary-exception\.files\.absolute-path\.read-only' >/dev/null \
+  || plist_value "$WIDGET_ENTITLEMENTS" 'com\.apple\.security\.temporary-exception\.files\.absolute-path\.read-write' >/dev/null \
+  || plist_value "$WIDGET_ENTITLEMENTS" 'com\.apple\.security\.application-groups' >/dev/null; then
+  fail "widget source entitlement expands shared-file access"
+fi
 
 codesign --verify --strict --verbose=2 "$WIDGET_DIR"
 codesign --verify --deep --strict --verbose=2 "$APP_DIR"
 codesign -d --entitlements :- "$APP_DIR" > "$SIGNED_APP_ENTITLEMENTS" 2>/dev/null
 codesign -d --entitlements :- "$WIDGET_DIR" > "$SIGNED_WIDGET_ENTITLEMENTS" 2>/dev/null
 
-[[ "$(plist_value "$SIGNED_APP_ENTITLEMENTS" 'com\.apple\.security\.application-groups.0')" == "group.com.codexmeter.CodexMeter" ]] \
-  || fail "signed app does not include the shared app group"
 if plist_value "$SIGNED_APP_ENTITLEMENTS" 'com\.apple\.security\.app-sandbox' >/dev/null; then
   fail "signed app must not enable the app sandbox"
 fi
-[[ "$(plist_value "$SIGNED_WIDGET_ENTITLEMENTS" 'com\.apple\.security\.application-groups.0')" == "group.com.codexmeter.CodexMeter" ]] \
-  || fail "signed widget does not include the shared app group"
 [[ "$(plist_value "$SIGNED_WIDGET_ENTITLEMENTS" 'com\.apple\.security\.app-sandbox')" == "true" ]] \
   || fail "signed widget does not enable the app sandbox"
+[[ "$(plist_value "$SIGNED_WIDGET_ENTITLEMENTS" 'com\.apple\.security\.temporary-exception\.files\.home-relative-path\.read-only.0')" == "/Library/Application Support/CodexMeter/" ]] \
+  || fail "signed widget does not preserve its read-only snapshot exception"
+if plist_value "$SIGNED_WIDGET_ENTITLEMENTS" 'com\.apple\.security\.temporary-exception\.files\.home-relative-path\.read-only.1' >/dev/null \
+  || plist_value "$SIGNED_WIDGET_ENTITLEMENTS" 'com\.apple\.security\.temporary-exception\.files\.home-relative-path\.read-write' >/dev/null \
+  || plist_value "$SIGNED_WIDGET_ENTITLEMENTS" 'com\.apple\.security\.temporary-exception\.files\.absolute-path\.read-only' >/dev/null \
+  || plist_value "$SIGNED_WIDGET_ENTITLEMENTS" 'com\.apple\.security\.temporary-exception\.files\.absolute-path\.read-write' >/dev/null \
+  || plist_value "$SIGNED_WIDGET_ENTITLEMENTS" 'com\.apple\.security\.application-groups' >/dev/null; then
+  fail "signed widget expands shared-file access"
+fi
 
 echo "PASS: widget extension bundle"

@@ -21,6 +21,11 @@ let widgetSnapshot: [HarnessTest] = [
         suite: "widget",
         name: "Failed widget snapshot writes preserve valid data",
         body: testFailedWidgetSnapshotWritePreservesValidData
+    ),
+    HarnessTest(
+        suite: "widget",
+        name: "Widget snapshot file store round trips atomically",
+        body: testWidgetSnapshotFileStore
     )
 ]
 
@@ -32,8 +37,8 @@ private func testWidgetSnapshotRoundTrip() throws {
 
     let widget = WidgetQuotaSnapshot(snapshot: providerSnapshot)
 
-    expectEqual(WidgetConfiguration.appGroupID, "group.com.codexmeter.CodexMeter")
     expectEqual(WidgetConfiguration.snapshotKey, "widget.quota.snapshot.v1")
+    expectEqual(WidgetConfiguration.snapshotFileName, "quota-snapshot-v1.json")
     expectEqual(WidgetConfiguration.widgetKind, "com.codexmeter.CodexMeter.quota-widget")
     expectEqual(widget.schemaVersion, WidgetQuotaSnapshot.currentSchemaVersion)
     expectEqual(widget.model, "gpt-5.5")
@@ -125,6 +130,90 @@ private func testFailedWidgetSnapshotWritePreservesValidData() throws {
 
     expectEqual(didThrow, true)
     expectEqual(store.read(), valid)
+}
+
+private func testWidgetSnapshotFileStore() throws {
+    let directory = FileManager.default.temporaryDirectory
+        .appendingPathComponent("CodexMeterWidgetTests-\(UUID().uuidString)")
+    let fileURL = directory.appendingPathComponent("quota-snapshot.json")
+    defer { try? FileManager.default.removeItem(at: directory) }
+
+    let store = WidgetSnapshotStore(fileURL: fileURL)
+    let valid = WidgetQuotaSnapshot(snapshot: makeWidgetProviderSnapshot())
+
+    expectNil(store.read())
+    try store.write(valid)
+
+    expectEqual(store.read(), valid)
+    expectEqual(FileManager.default.fileExists(atPath: fileURL.path), true)
+    let permissions = try FileManager.default.attributesOfItem(atPath: fileURL.path)[
+        .posixPermissions
+    ] as? NSNumber
+    expectEqual(permissions?.intValue, 0o600)
+    let directoryPermissions = try FileManager.default.attributesOfItem(
+        atPath: directory.path
+    )[.posixPermissions] as? NSNumber
+    expectEqual(directoryPermissions?.intValue, 0o700)
+
+    let replacement = WidgetQuotaSnapshot(
+        snapshot: makeWidgetProviderSnapshot(primaryUsedPercent: 45)
+    )
+    try store.write(replacement)
+    expectEqual(store.read(), replacement)
+
+    let injectedHomeURL = directory.appendingPathComponent("InjectedHome")
+    let applicationSupportStore = WidgetSnapshotStore.applicationSupport(
+        homeDirectoryURL: injectedHomeURL
+    )
+    try applicationSupportStore.write(valid)
+    let injectedSnapshotURL = injectedHomeURL
+        .appendingPathComponent("Library/Application Support/CodexMeter")
+        .appendingPathComponent(WidgetConfiguration.snapshotFileName)
+    expectEqual(FileManager.default.fileExists(atPath: injectedSnapshotURL.path), true)
+    expectEqual(applicationSupportStore.read(), valid)
+
+    let rejectingStore = WidgetSnapshotStore(
+        fileURL: fileURL,
+        fileManager: RejectingTemporaryFileAttributesFileManager()
+    )
+    var rejectedWriteDidThrow = false
+    do {
+        try rejectingStore.write(valid)
+    } catch {
+        rejectedWriteDidThrow = true
+    }
+    expectEqual(rejectedWriteDidThrow, true)
+    expectEqual(store.read(), replacement)
+    let temporaryFiles = try FileManager.default.contentsOfDirectory(
+        at: directory,
+        includingPropertiesForKeys: nil
+    ).filter { $0.lastPathComponent.hasSuffix(".tmp") }
+    expectEqual(temporaryFiles.isEmpty, true)
+
+    let invalid = WidgetQuotaSnapshot(
+        snapshot: makeWidgetProviderSnapshot(primaryUsedPercent: .nan)
+    )
+    var didThrow = false
+    do {
+        try store.write(invalid)
+    } catch {
+        didThrow = true
+    }
+
+    expectEqual(didThrow, true)
+    expectEqual(store.read(), replacement)
+}
+
+private final class RejectingTemporaryFileAttributesFileManager: FileManager, @unchecked Sendable {
+    override func setAttributes(
+        _ attributes: [FileAttributeKey: Any],
+        ofItemAtPath path: String
+    ) throws {
+        if path.hasSuffix(".tmp") {
+            throw CocoaError(.fileWriteNoPermission)
+        }
+        try super.setAttributes(attributes, ofItemAtPath: path)
+    }
 }
 
 private func encodedWidgetSnapshot(_ snapshot: ProviderSnapshot) throws -> Data {

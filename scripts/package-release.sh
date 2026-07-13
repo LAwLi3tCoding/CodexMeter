@@ -98,6 +98,40 @@ fi
 codesign --verify --strict "$WIDGET_DIR"
 codesign --verify --deep --strict "$APP_DIR"
 
+readonly SIGNED_WIDGET_ENTITLEMENTS="$(mktemp "${TMPDIR:-/tmp}/codexmeter-widget-entitlements.XXXXXX")"
+readonly SIGNED_APP_ENTITLEMENTS="$(mktemp "${TMPDIR:-/tmp}/codexmeter-app-entitlements.XXXXXX")"
+cleanup_entitlements() {
+  rm -f "$SIGNED_WIDGET_ENTITLEMENTS" "$SIGNED_APP_ENTITLEMENTS"
+}
+trap cleanup_entitlements EXIT
+codesign -d --entitlements :- "$WIDGET_DIR" > "$SIGNED_WIDGET_ENTITLEMENTS" 2>/dev/null
+codesign -d --entitlements :- "$APP_DIR" > "$SIGNED_APP_ENTITLEMENTS" 2>/dev/null
+
+if plutil -extract 'com\.apple\.security\.app-sandbox' raw -o - "$SIGNED_APP_ENTITLEMENTS" >/dev/null 2>&1 \
+  || plutil -extract 'com\.apple\.security\.application-groups' raw -o - "$SIGNED_APP_ENTITLEMENTS" >/dev/null 2>&1; then
+  echo "Containing app signature must remain unsandboxed and outside App Groups." >&2
+  exit 1
+fi
+
+WIDGET_SANDBOX="$(
+  plutil -extract 'com\.apple\.security\.app-sandbox' raw -o - "$SIGNED_WIDGET_ENTITLEMENTS" 2>/dev/null || true
+)"
+WIDGET_READ_PATH="$(
+  plutil -extract 'com\.apple\.security\.temporary-exception\.files\.home-relative-path\.read-only.0' raw -o - "$SIGNED_WIDGET_ENTITLEMENTS" 2>/dev/null || true
+)"
+if [[ "$WIDGET_SANDBOX" != "true" || "$WIDGET_READ_PATH" != "/Library/Application Support/CodexMeter/" ]]; then
+  echo "Widget signature is missing the required sandboxed read-only snapshot entitlement." >&2
+  exit 1
+fi
+if plutil -extract 'com\.apple\.security\.temporary-exception\.files\.home-relative-path\.read-only.1' raw -o - "$SIGNED_WIDGET_ENTITLEMENTS" >/dev/null 2>&1 \
+  || plutil -extract 'com\.apple\.security\.temporary-exception\.files\.home-relative-path\.read-write' raw -o - "$SIGNED_WIDGET_ENTITLEMENTS" >/dev/null 2>&1 \
+  || plutil -extract 'com\.apple\.security\.temporary-exception\.files\.absolute-path\.read-only' raw -o - "$SIGNED_WIDGET_ENTITLEMENTS" >/dev/null 2>&1 \
+  || plutil -extract 'com\.apple\.security\.temporary-exception\.files\.absolute-path\.read-write' raw -o - "$SIGNED_WIDGET_ENTITLEMENTS" >/dev/null 2>&1 \
+  || plutil -extract 'com\.apple\.security\.application-groups' raw -o - "$SIGNED_WIDGET_ENTITLEMENTS" >/dev/null 2>&1; then
+  echo "Widget signature contains unexpected shared-file entitlements." >&2
+  exit 1
+fi
+
 readonly ARCHS="$(lipo -archs "$EXECUTABLE")"
 case " $ARCHS " in
   *" arm64 "*" x86_64 "*|*" x86_64 "*" arm64 "*)

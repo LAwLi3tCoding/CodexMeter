@@ -28,7 +28,16 @@ zsh Tests/Scripts/AppIconTests.sh
 zsh Tests/Scripts/InstallScriptTests.sh
 zsh Tests/Scripts/PackageReleaseScriptTests.sh
 zsh Tests/Scripts/PanelLayoutTests.sh
+zsh Tests/Scripts/WidgetBundleTests.sh
 ./scripts/build-app.sh
+```
+
+Also compile the extension product with app-extension restrictions and warnings as errors:
+
+```bash
+swift build --product CodexMeterWidget \
+  -Xswiftc -application-extension \
+  -Xswiftc -warnings-as-errors
 ```
 
 If a signed-in Codex CLI is available, also run:
@@ -44,6 +53,8 @@ swift run CodexMeterTests --suite live
 - `CodexMeterCore/Services` owns process transport and operating-system services.
 - `QuotaStore` owns refresh state and is the only observable application state.
 - `SettingsStore` may persist preferences and notification metadata, never credentials.
+- `AppWidgetSnapshotPublisher` is the only bridge that writes the private Application Support widget snapshot and requests a WidgetKit reload.
+- `CodexMeterWidget` reads the privacy-minimal shared snapshot; it must never start Codex CLI, access credentials, or perform network requests.
 
 New coding-tool integrations should implement `QuotaProvider` and must document their supported, non-private data source. Unsupported providers should fail explicitly rather than fabricating quota values.
 
@@ -67,4 +78,4 @@ The app version in `Resources/Info.plist` must match the Git tag. Create the Git
 ./scripts/package-release.sh v0.1.0
 ```
 
-The command builds and verifies the app, creates the architecture-specific ZIP in `dist/`, and writes the matching SHA-256 file consumed by `scripts/install.sh`. Upload both files to the same GitHub Release without renaming them.
+The command builds and verifies the app plus its nested `CodexMeterWidget.appex`, creates the architecture-specific ZIP in `dist/`, and writes the matching SHA-256 file consumed by `scripts/install.sh`. Upload both files to the same GitHub Release without renaming them.

@@ -72,6 +72,88 @@ make_fake_commands() {
 
   cat > "$bin_dir/codesign" <<'EOF'
 #!/bin/zsh
+set -euo pipefail
+
+if [[ "$*" == *"--entitlements :-"* ]]; then
+  target="${@: -1}"
+  if [[ "$target" != *"CodexMeterWidget.appex" ]]; then
+    if [[ "${FAKE_WIDGET_ENTITLEMENT_STATE:-valid}" == "sandboxed-app" ]]; then
+      print -r -- '<?xml version="1.0" encoding="UTF-8"?><plist version="1.0"><dict><key>com.apple.security.app-sandbox</key><true/></dict></plist>'
+    else
+      print -r -- '<?xml version="1.0" encoding="UTF-8"?><plist version="1.0"><dict/></plist>'
+    fi
+  elif [[ "${FAKE_WIDGET_ENTITLEMENT_STATE:-valid}" == "missing-read" ]]; then
+    cat <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict>
+  <key>com.apple.security.app-sandbox</key><true/>
+</dict></plist>
+PLIST
+  elif [[ "${FAKE_WIDGET_ENTITLEMENT_STATE:-valid}" == "wrong-read" ]]; then
+    cat <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict>
+  <key>com.apple.security.app-sandbox</key><true/>
+  <key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
+  <array><string>/Library/Application Support/OtherApp/</string></array>
+</dict></plist>
+PLIST
+  elif [[ "${FAKE_WIDGET_ENTITLEMENT_STATE:-valid}" == "extra-read" ]]; then
+    cat <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict>
+  <key>com.apple.security.app-sandbox</key><true/>
+  <key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
+  <array>
+    <string>/Library/Application Support/CodexMeter/</string>
+    <string>/Documents/</string>
+  </array>
+</dict></plist>
+PLIST
+  elif [[ "${FAKE_WIDGET_ENTITLEMENT_STATE:-valid}" == "read-write" ]]; then
+    cat <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict>
+  <key>com.apple.security.app-sandbox</key><true/>
+  <key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
+  <array><string>/Library/Application Support/CodexMeter/</string></array>
+  <key>com.apple.security.temporary-exception.files.home-relative-path.read-write</key>
+  <array><string>/Documents/</string></array>
+</dict></plist>
+PLIST
+  elif [[ "${FAKE_WIDGET_ENTITLEMENT_STATE:-valid}" == "absolute-path" ]]; then
+    cat <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict>
+  <key>com.apple.security.app-sandbox</key><true/>
+  <key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
+  <array><string>/Library/Application Support/CodexMeter/</string></array>
+  <key>com.apple.security.temporary-exception.files.absolute-path.read-only</key>
+  <array><string>/private/tmp/</string></array>
+</dict></plist>
+PLIST
+  elif [[ "${FAKE_WIDGET_ENTITLEMENT_STATE:-valid}" == "app-group" ]]; then
+    cat <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict>
+  <key>com.apple.security.app-sandbox</key><true/>
+  <key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
+  <array><string>/Library/Application Support/CodexMeter/</string></array>
+  <key>com.apple.security.application-groups</key>
+  <array><string>group.com.codexmeter.Unexpected</string></array>
+</dict></plist>
+PLIST
+  else
+    cat <<'PLIST'
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict>
+  <key>com.apple.security.app-sandbox</key><true/>
+  <key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
+  <array><string>/Library/Application Support/CodexMeter/</string></array>
+</dict></plist>
+PLIST
+  fi
+fi
 exit 0
 EOF
 
@@ -212,6 +294,27 @@ test_rejects_invalid_widget_extension_point() {
   fi
 }
 
+test_rejects_invalid_signed_entitlements() {
+  local entitlement_state
+  for entitlement_state in missing-read wrong-read extra-read read-write absolute-path app-group sandboxed-app; do
+    local case_dir="$TEST_ROOT/invalid-entitlement-$entitlement_state"
+    local app_dir="$case_dir/CodexMeter.app"
+    local output_dir="$case_dir/dist"
+    local bin_dir="$case_dir/bin"
+
+    make_fake_app "$app_dir" "0.1.0"
+    make_fake_commands "$bin_dir"
+
+    if FAKE_WIDGET_ENTITLEMENT_STATE="$entitlement_state" \
+      CODEXMETER_APP_PATH="$app_dir" \
+      CODEXMETER_OUTPUT_DIR="$output_dir" \
+      PATH="$bin_dir:$PATH" \
+      zsh "$PACKAGE_SCRIPT" v0.1.0 >/dev/null 2>&1; then
+      fail "packager accepted invalid signed entitlements: $entitlement_state"
+    fi
+  done
+}
+
 test_help
 test_packages_matching_app_version
 test_rejects_version_mismatch
@@ -219,5 +322,6 @@ test_rejects_missing_icon
 test_rejects_icon_metadata_mismatch
 test_rejects_missing_widget_extension
 test_rejects_invalid_widget_extension_point
+test_rejects_invalid_signed_entitlements
 
 echo "PASS: release packaging script"

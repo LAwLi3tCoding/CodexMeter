@@ -1,8 +1,8 @@
 import Foundation
 
 public enum WidgetConfiguration {
-    public static let appGroupID = "group.com.codexmeter.CodexMeter"
     public static let snapshotKey = "widget.quota.snapshot.v1"
+    public static let snapshotFileName = "quota-snapshot-v1.json"
     public static let widgetKind = "com.codexmeter.CodexMeter.quota-widget"
 }
 
