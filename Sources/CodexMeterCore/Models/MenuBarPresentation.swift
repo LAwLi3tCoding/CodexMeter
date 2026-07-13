@@ -5,6 +5,7 @@ public struct MenuBarPresentation: Equatable, Sendable {
     public let percentageText: String
     public let countdownText: String?
     public let labelText: String
+    public let displayText: String
     public let accessibilityLabel: String
     public let systemImageName: String
 
@@ -16,6 +17,7 @@ public struct MenuBarPresentation: Equatable, Sendable {
             percentageText = "--"
             countdownText = nil
             labelText = "--"
+            displayText = "\(brandText) \(labelText)"
             accessibilityLabel = "Codex 额度暂不可用"
             return
         }
@@ -33,6 +35,7 @@ public struct MenuBarPresentation: Equatable, Sendable {
         } else {
             percentage
         }
+        displayText = "\(brandText) \(labelText)"
         accessibilityLabel = if let countdown {
             "Codex 剩余 \(remaining)%，\(countdown) 后重置"
         } else {

@@ -44,6 +44,7 @@ private func testMenuBarUsesMostConstrainedQuota() {
 private func testMenuBarEmptyState() {
     let presentation = MenuBarPresentation(quotas: [], now: .distantPast)
 
+    expectEqual(presentation.displayText, "Codex --")
     expectEqual(presentation.percentageText, "--")
     expectNil(presentation.countdownText)
     expectEqual(presentation.accessibilityLabel, "Codex 额度暂不可用")
@@ -64,6 +65,7 @@ private func testMenuBarLabelCombinesPercentageAndCountdown() {
         now: now
     )
 
+    expectEqual(presentation.displayText, "Codex 72% · 3h45m")
     expectEqual(presentation.labelText, "72% · 3h45m")
 }
 

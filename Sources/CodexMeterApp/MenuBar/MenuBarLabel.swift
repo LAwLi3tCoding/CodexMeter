@@ -10,10 +10,8 @@ struct MenuBarLabel: View {
                 .symbolRenderingMode(.hierarchical)
                 .frame(width: 14, height: 14, alignment: .center)
 
-            Text(presentation.brandText)
+            Text(presentation.displayText)
                 .fontWeight(.semibold)
-
-            Text(presentation.labelText)
                 .monospacedDigit()
         }
         .accessibilityElement(children: .ignore)
