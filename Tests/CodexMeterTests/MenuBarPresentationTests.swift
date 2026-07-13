@@ -14,8 +14,8 @@ let menuBarPresentation: [HarnessTest] = [
     ),
     HarnessTest(
         suite: "presentation",
-        name: "Menu bar label combines percentage and countdown",
-        body: testMenuBarLabelCombinesPercentageAndCountdown
+        name: "Menu bar keeps a compact remaining percentage visible",
+        body: testMenuBarKeepsCompactPercentageVisible
     ),
     HarnessTest(
         suite: "presentation",
@@ -52,7 +52,7 @@ private func testMenuBarEmptyState() {
     expectEqual(presentation.systemImageName, "gauge.medium")
 }
 
-private func testMenuBarLabelCombinesPercentageAndCountdown() {
+private func testMenuBarKeepsCompactPercentageVisible() {
     let now = Date(timeIntervalSince1970: 1_730_900_000)
     let presentation = MenuBarPresentation(
         quotas: [
@@ -65,7 +65,7 @@ private func testMenuBarLabelCombinesPercentageAndCountdown() {
         now: now
     )
 
-    expectEqual(presentation.displayText, "Codex 72% · 3h45m")
+    expectEqual(presentation.displayText, "Codex 72%")
     expectEqual(presentation.labelText, "72% · 3h45m")
 }
 

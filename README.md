@@ -8,8 +8,8 @@ CodexMeter is a native macOS menu bar app that shows the remaining quota reporte
 
 ## Features
 
-- Live menu bar percentage and reset countdown.
-- Compact reset countdowns with days, hours, and minutes, such as `3d2h5m`.
+- Compact, always-visible menu bar remaining percentage such as `Codex 64%`.
+- Reset countdowns in the dashboard and widgets use days, hours, and minutes, such as `3d2h5m`.
 - Multiple quota windows, including five-hour, weekly, and model-specific limits.
 - Current Codex account type, masked account email, plan, and configured model.
 - Manual refresh and a low-CPU automatic refresh loop that defaults to 60 seconds.
@@ -88,6 +88,8 @@ It initializes the documented newline-delimited App Server protocol and uses the
 - `config/read` for the effective configured model.
 
 The app decodes only the fields it needs, ignores unknown response fields, drains helper stderr without storing it, and never reads `~/.codex/auth.json`, Keychain tokens, Codex SQLite data, or private ChatGPT HTTP endpoints. Account responses and effective configuration are never logged.
+
+Subscription resolution trims blank values and prefers the root quota response, then the canonical `codex` quota bucket, then a plan shared by every other quota bucket. It falls back to account metadata when quota plans are absent or conflicting. The Codex `pro` quota tier is displayed as `PRO 20X`.
 
 `usedPercent` is converted to remaining percentage with `100 - usedPercent`. A value such as `3d2h5m` is the time until that quota window resets; it is not a guaranteed amount of model runtime. The protocol does not provide a reliable remaining-message count.
 

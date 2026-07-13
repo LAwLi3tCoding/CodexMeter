@@ -35,7 +35,7 @@ public struct MenuBarPresentation: Equatable, Sendable {
         } else {
             percentage
         }
-        displayText = "\(brandText) \(labelText)"
+        displayText = "\(brandText) \(percentage)"
         accessibilityLabel = if let countdown {
             "Codex 剩余 \(remaining)%，\(countdown) 后重置"
         } else {

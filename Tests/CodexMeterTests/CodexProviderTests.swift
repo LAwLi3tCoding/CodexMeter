@@ -14,6 +14,31 @@ let codexProvider: [HarnessTest] = [
     ),
     HarnessTest(
         suite: "provider",
+        name: "Provider prefers the canonical Codex plan over other buckets",
+        body: testCanonicalPlanPrecedence
+    ),
+    HarnessTest(
+        suite: "provider",
+        name: "Provider prefers the root quota plan over bucket metadata",
+        body: testRootPlanPrecedence
+    ),
+    HarnessTest(
+        suite: "provider",
+        name: "Provider falls back to account metadata when secondary plans conflict",
+        body: testConflictingSecondaryPlanFallback
+    ),
+    HarnessTest(
+        suite: "provider",
+        name: "Provider uses a plan shared by all secondary buckets",
+        body: testUnanimousSecondaryPlan
+    ),
+    HarnessTest(
+        suite: "provider",
+        name: "Provider ignores blank quota plans and falls back to account metadata",
+        body: testBlankPlanFallback
+    ),
+    HarnessTest(
+        suite: "provider",
         name: "Provider rejects an unauthenticated account",
         body: testUnauthenticatedAccount
     ),
@@ -28,7 +53,7 @@ private func testMultiBucketMapping() async throws {
     let now = Date(timeIntervalSince1970: 1_730_900_000)
     let client = StubCodexClient(
         accountResponse: CodexAccountResponse(
-            account: CodexAccount(type: "chatgpt", email: "developer@example.com", planType: "pro"),
+            account: CodexAccount(type: "chatgpt", email: "developer@example.com", planType: "plus"),
             requiresOpenaiAuth: true
         ),
         rateLimitsResponse: CodexRateLimitsResponse(
@@ -89,6 +114,141 @@ private func testSingleBucketFallback() async throws {
     expectEqual(snapshot.quotas.first?.percentage, 90)
 }
 
+private func testCanonicalPlanPrecedence() async throws {
+    let client = StubCodexClient(
+        accountResponse: CodexAccountResponse(
+            account: CodexAccount(type: "chatgpt", planType: "plus"),
+            requiresOpenaiAuth: true
+        ),
+        rateLimitsResponse: CodexRateLimitsResponse(
+            rateLimits: CodexRateLimitSnapshot(
+                limitId: "fallback",
+                primary: CodexRateLimitWindow(usedPercent: 10, windowDurationMins: 300)
+            ),
+            rateLimitsByLimitId: [
+                "aaa": CodexRateLimitSnapshot(
+                    limitId: "aaa",
+                    primary: CodexRateLimitWindow(usedPercent: 10, windowDurationMins: 300),
+                    planType: "plus"
+                ),
+                "codex": CodexRateLimitSnapshot(
+                    limitId: "codex",
+                    primary: CodexRateLimitWindow(usedPercent: 10, windowDurationMins: 300),
+                    planType: "pro"
+                )
+            ]
+        ),
+        configResponse: CodexConfigResponse(config: CodexEffectiveConfig(model: nil))
+    )
+
+    let snapshot = try await CodexProvider(client: client).fetchSnapshot()
+
+    expectEqual(snapshot.plan, "pro")
+}
+
+private func testRootPlanPrecedence() async throws {
+    let client = StubCodexClient(
+        accountResponse: CodexAccountResponse(
+            account: CodexAccount(type: "chatgpt", planType: "plus"),
+            requiresOpenaiAuth: true
+        ),
+        rateLimitsResponse: CodexRateLimitsResponse(
+            rateLimits: CodexRateLimitSnapshot(limitId: "fallback", planType: "pro"),
+            rateLimitsByLimitId: [
+                "codex": CodexRateLimitSnapshot(
+                    limitId: "codex",
+                    primary: CodexRateLimitWindow(usedPercent: 10, windowDurationMins: 300),
+                    planType: "plus"
+                )
+            ]
+        ),
+        configResponse: CodexConfigResponse(config: CodexEffectiveConfig(model: nil))
+    )
+
+    let snapshot = try await CodexProvider(client: client).fetchSnapshot()
+
+    expectEqual(snapshot.plan, "pro")
+}
+
+private func testConflictingSecondaryPlanFallback() async throws {
+    let client = StubCodexClient(
+        accountResponse: CodexAccountResponse(
+            account: CodexAccount(type: "chatgpt", planType: "plus"),
+            requiresOpenaiAuth: true
+        ),
+        rateLimitsResponse: CodexRateLimitsResponse(
+            rateLimits: CodexRateLimitSnapshot(limitId: "fallback"),
+            rateLimitsByLimitId: [
+                "alpha": CodexRateLimitSnapshot(
+                    limitId: "alpha",
+                    primary: CodexRateLimitWindow(usedPercent: 10, windowDurationMins: 300),
+                    planType: "pro"
+                ),
+                "beta": CodexRateLimitSnapshot(
+                    limitId: "beta",
+                    primary: CodexRateLimitWindow(usedPercent: 10, windowDurationMins: 300),
+                    planType: "team"
+                )
+            ]
+        ),
+        configResponse: CodexConfigResponse(config: CodexEffectiveConfig(model: nil))
+    )
+
+    let snapshot = try await CodexProvider(client: client).fetchSnapshot()
+
+    expectEqual(snapshot.plan, "plus")
+}
+
+private func testUnanimousSecondaryPlan() async throws {
+    let client = StubCodexClient(
+        accountResponse: CodexAccountResponse(
+            account: CodexAccount(type: "chatgpt", planType: "plus"),
+            requiresOpenaiAuth: true
+        ),
+        rateLimitsResponse: CodexRateLimitsResponse(
+            rateLimits: CodexRateLimitSnapshot(limitId: "fallback"),
+            rateLimitsByLimitId: [
+                "alpha": CodexRateLimitSnapshot(
+                    limitId: "alpha",
+                    primary: CodexRateLimitWindow(usedPercent: 10, windowDurationMins: 300),
+                    planType: "pro"
+                ),
+                "beta": CodexRateLimitSnapshot(
+                    limitId: "beta",
+                    primary: CodexRateLimitWindow(usedPercent: 10, windowDurationMins: 300),
+                    planType: "pro"
+                )
+            ]
+        ),
+        configResponse: CodexConfigResponse(config: CodexEffectiveConfig(model: nil))
+    )
+
+    let snapshot = try await CodexProvider(client: client).fetchSnapshot()
+
+    expectEqual(snapshot.plan, "pro")
+}
+
+private func testBlankPlanFallback() async throws {
+    let client = StubCodexClient(
+        accountResponse: CodexAccountResponse(
+            account: CodexAccount(type: "chatgpt", planType: "plus"),
+            requiresOpenaiAuth: true
+        ),
+        rateLimitsResponse: CodexRateLimitsResponse(
+            rateLimits: CodexRateLimitSnapshot(
+                limitId: "codex",
+                primary: CodexRateLimitWindow(usedPercent: 10, windowDurationMins: 300),
+                planType: "   "
+            )
+        ),
+        configResponse: CodexConfigResponse(config: CodexEffectiveConfig(model: nil))
+    )
+
+    let snapshot = try await CodexProvider(client: client).fetchSnapshot()
+
+    expectEqual(snapshot.plan, "plus")
+}
+
 private func testUnauthenticatedAccount() async {
     let client = StubCodexClient(
         accountResponse: CodexAccountResponse(account: nil, requiresOpenaiAuth: true),
@@ -126,6 +286,7 @@ private func testConfigFailureFallback() async throws {
     let snapshot = try await CodexProvider(client: client).fetchSnapshot()
 
     expectEqual(snapshot.model, "Codex")
+    expectEqual(snapshot.plan, "plus")
     expectEqual(snapshot.quotas.first?.percentage, 80)
 }
 

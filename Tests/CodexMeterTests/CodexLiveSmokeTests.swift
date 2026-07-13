@@ -18,6 +18,12 @@ private func testLiveCodexSnapshot() async throws {
         if snapshot.quotas.isEmpty {
             TestRecorder.record("expected at least one quota window")
         }
+        if snapshot.plan?.lowercased() == "pro" {
+            expectEqual(
+                StatusPanelPresentation(snapshot: snapshot).planText,
+                "PRO 20X"
+            )
+        }
     } catch {
         await client.shutdown()
         throw error

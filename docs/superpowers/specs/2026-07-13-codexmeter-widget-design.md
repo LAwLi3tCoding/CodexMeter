@@ -8,7 +8,7 @@ CodexMeter restores a stable percentage-bearing menu-bar label, formats reset co
 
 ## User-visible contract
 
-- The menu bar always renders one compact status string after the gauge icon: `Codex 72% · 3h45m`, or `Codex --` while data is unavailable.
+- The menu bar always renders one compact status string after the gauge icon: `Codex 72%`, or `Codex --` while data is unavailable. The full reset countdown remains available in the panel, widgets, and accessibility label.
 - The reset countdown never accumulates days into hours. Examples: `3d2h5m`, `12h4m`, `45m`, `即将重置`, and `—`.
 - The widget supports `.systemSmall` and `.systemMedium`.
 - The small widget shows the most constrained quota, its percentage, ten-segment gauge, reset countdown, and update freshness.
@@ -20,7 +20,7 @@ CodexMeter restores a stable percentage-bearing menu-bar label, formats reset co
 
 The previous working menu-bar implementation rendered the changing status as one text node. The redesign split `Codex` and the percentage/countdown into separate `Text` children. `MenuBarExtra` status-item sizing can keep or truncate those children independently, which matches the observed regression where the brand remained and the percentage disappeared.
 
-`MenuBarPresentation` will expose `displayText`, combining the brand and status into one stable string. `MenuBarLabel` will render exactly one `Text(presentation.displayText)` beside the SF Symbol. This keeps the visual alignment introduced by the redesign while making the percentage indivisible from the brand.
+`MenuBarPresentation` exposes `displayText`, combining the brand and remaining percentage into one stable string. `MenuBarLabel` renders exactly one `Text(presentation.displayText)` beside the SF Symbol. Keeping the visible status to `Codex 72%` reduces its width so macOS is less likely to hide it when the menu bar is crowded, while `labelText` and the accessibility label retain the reset countdown.
 
 ## Countdown rules
 
@@ -135,7 +135,7 @@ An always-on-top desktop window would refresh freely but is not a macOS widget a
 
 ## Verification and acceptance
 
-1. Presentation tests assert the combined menu text includes `Codex`, percentage, and countdown.
+1. Presentation tests assert the compact menu text includes `Codex` and the percentage, while the detailed label retains the countdown.
 2. Formatter tests cover day/hour/minute boundaries and expired/missing reset times.
 3. Snapshot tests cover round-trip encoding, privacy, missing/corrupt data, and unsupported schema.
 4. Store tests prove only successful quota refreshes publish widget data and failed refreshes retain the last good snapshot.

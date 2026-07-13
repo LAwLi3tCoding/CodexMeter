@@ -4,7 +4,7 @@ Date: 2026-07-13
 
 ## Product outcome
 
-CodexMeter is a native macOS 13+ menu bar application that shows the most constrained current Codex quota as a remaining percentage and reset countdown, opens a SwiftUI status panel with every available quota window, refreshes once per minute by default, and sends deduplicated low-quota notifications.
+CodexMeter is a native macOS 13+ menu bar application that keeps the most constrained current Codex quota visible as a compact remaining percentage, opens a SwiftUI status panel with every quota window and reset countdown, refreshes once per minute by default, and sends deduplicated low-quota notifications.
 
 Success means:
 
@@ -119,7 +119,7 @@ The helper is restarted once after a broken pipe or unexpected exit. Each reques
 
 ## Menu bar and panel UI
 
-The menu bar label uses a native SF Symbol plus the minimum remaining percentage. When reset information is available it also shows a compact countdown, for example `72% · 3h45m`. The minimum remaining percentage is intentionally conservative when several windows exist.
+The menu bar label uses a native SF Symbol plus a compact, always-visible brand and minimum remaining percentage, for example `Codex 72%`. Reset countdowns stay in the panel, widgets, and VoiceOver label so the status item remains visible in crowded menu bars. The minimum remaining percentage is intentionally conservative when several windows exist.
 
 The panel is a 360-point-wide SwiftUI window-style `MenuBarExtra`:
 
@@ -152,7 +152,7 @@ User-facing errors are classified:
 - network or service failure: retain the last successful snapshot, mark it stale, and allow manual retry;
 - helper process failure: restart once and then surface the error.
 
-Unknown JSON fields and unknown plan strings are ignored or displayed as `unknown`. Missing reset times and window durations produce a reduced card instead of a failure.
+Unknown JSON fields are ignored. Unknown non-empty plan strings are displayed in uppercase without applying Codex-specific tier wording. Missing reset times and window durations produce a reduced card instead of a failure.
 
 ## Storage and extension points
 

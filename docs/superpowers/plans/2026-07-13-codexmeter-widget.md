@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - The application deployment target remains macOS 13.0; desktop widget placement requires macOS 14.0 or later.
-- The menu bar renders a single combined text value so `Codex`, percentage, and countdown cannot be independently truncated.
+- The menu bar renders a single compact `Codex <percentage>` text value so the remaining quota stays visible even when menu-bar space is constrained; countdown remains in detailed and accessibility text.
 - Countdown output is compact `d/h/m`; a future value under one minute displays `1m`.
 - Quota colors are green at 50% or more, orange from 20% through 49.999%, and red below 20%.
 - The widget never starts Codex CLI and never persists account, token, keychain, or raw protocol data.
@@ -55,7 +55,7 @@
 Add assertions equivalent to:
 
 ```swift
-expectEqual(presentation.displayText, "Codex 72% · 3h45m")
+expectEqual(presentation.displayText, "Codex 72%")
 expectEqual(empty.displayText, "Codex --")
 
 let reset = now.addingTimeInterval((3 * 86_400) + (2 * 3_600) + (5 * 60))
@@ -81,7 +81,7 @@ Add `displayText` to `MenuBarPresentation` and assign it in both initialization 
 ```swift
 public let displayText: String
 
-displayText = "\(brandText) \(labelText)"
+displayText = "\(brandText) \(percentageText)"
 ```
 
 Decompose reset time with:

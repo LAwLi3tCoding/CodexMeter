@@ -52,7 +52,10 @@ public struct CodexProvider: QuotaProvider, Sendable {
             provider: .codex,
             account: account,
             accountKind: accountKind(for: accountResponse.account?.type),
-            plan: accountResponse.account?.planType ?? snapshots.first?.snapshot.planType,
+            plan: resolvedPlan(
+                from: limitsResponse,
+                accountPlan: accountResponse.account?.planType
+            ),
             model: configuredModel,
             quotas: quotas,
             updatedAt: updatedAt
@@ -84,6 +87,39 @@ public struct CodexProvider: QuotaProvider, Sendable {
         }
 
         return [(response.rateLimits.limitId, response.rateLimits)]
+    }
+
+    private func resolvedPlan(
+        from response: CodexRateLimitsResponse,
+        accountPlan: String?
+    ) -> String? {
+        if let rootPlan = normalizedPlan(response.rateLimits.planType) {
+            return rootPlan
+        }
+
+        let buckets = response.rateLimitsByLimitId ?? [:]
+        let canonicalPlan = buckets
+            .sorted { $0.key < $1.key }
+            .first { key, snapshot in
+                key.lowercased() == "codex" || snapshot.limitId.lowercased() == "codex"
+            }
+            .flatMap { normalizedPlan($0.value.planType) }
+        if let canonicalPlan {
+            return canonicalPlan
+        }
+
+        let otherPlans = Set(buckets.values.compactMap { normalizedPlan($0.planType) })
+        if otherPlans.count == 1 {
+            return otherPlans.first
+        }
+
+        return normalizedPlan(accountPlan)
+    }
+
+    private func normalizedPlan(_ plan: String?) -> String? {
+        guard let plan else { return nil }
+        let normalized = plan.trimmingCharacters(in: .whitespacesAndNewlines)
+        return normalized.isEmpty ? nil : normalized
     }
 
     private func quotaStatuses(

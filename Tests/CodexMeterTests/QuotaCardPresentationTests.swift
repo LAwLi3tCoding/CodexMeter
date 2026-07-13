@@ -49,6 +49,16 @@ let quotaCardPresentation: [HarnessTest] = [
     ),
     HarnessTest(
         suite: "ui-presentation",
+        name: "Panel header labels the Pro twenty-times tier",
+        body: testProTwentyTimesPlanFormatting
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Non-Codex providers keep their own Pro label",
+        body: testNonCodexProPlanFormatting
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
         name: "Panel keeps and sorts every quota card",
         body: testPanelQuotaCardOrdering
     ),
@@ -190,6 +200,40 @@ private func testAPIKeyAccountFormatting() {
     let presentation = StatusPanelPresentation(snapshot: snapshot)
 
     expectEqual(presentation.accountText, "API key account")
+}
+
+private func testProTwentyTimesPlanFormatting() {
+    let quota = makePresentationQuota(usedPercent: 20)
+    let snapshot = ProviderSnapshot(
+        provider: .codex,
+        account: nil,
+        accountKind: .chatGPT,
+        plan: "pro",
+        model: "Codex",
+        quotas: [quota],
+        updatedAt: quota.updatedAt
+    )
+
+    let presentation = StatusPanelPresentation(snapshot: snapshot)
+
+    expectEqual(presentation.planText, "PRO 20X")
+}
+
+private func testNonCodexProPlanFormatting() {
+    let quota = makePresentationQuota(usedPercent: 20)
+    let snapshot = ProviderSnapshot(
+        provider: .openAI,
+        account: nil,
+        accountKind: .unknown,
+        plan: "pro",
+        model: "OpenAI",
+        quotas: [quota],
+        updatedAt: quota.updatedAt
+    )
+
+    let presentation = StatusPanelPresentation(snapshot: snapshot)
+
+    expectEqual(presentation.planText, "PRO")
 }
 
 private func testPanelQuotaCardOrdering() {

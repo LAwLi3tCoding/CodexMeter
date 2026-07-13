@@ -23,7 +23,7 @@ The selected direction uses system typography, semantic surfaces, SF Symbols, su
 - Show a dashboard-style SF Symbol, the fixed word `Codex`, and the live quota value as one vertically centered label.
 - Separate the fixed brand and dynamic value with deliberate spacing so the text no longer appears attached to the icon.
 - Use monospaced digits for percentage and countdown values so minute-by-minute changes do not shift the label.
-- Keep the label compact: `Codex 72% · 3h45m`. The word `Codex` makes the status item self-identifying even when several menu-bar utilities are installed.
+- Keep the label compact: `Codex 72%`. The word `Codex` makes the status item self-identifying, while omitting the countdown keeps the remaining quota visible when menu-bar space is constrained.
 - Preserve a concise VoiceOver label that explains remaining quota and reset time.
 
 ## Panel composition
@@ -85,7 +85,7 @@ There is no fourth visual color. The existing low/critical distinction is collap
 
 ## Acceptance criteria
 
-1. The menu-bar item visibly identifies Codex and keeps its icon, brand, percentage, and countdown aligned.
+1. The menu-bar item visibly identifies Codex and keeps its icon, brand, and remaining percentage aligned; the countdown remains in the detail panel.
 2. The panel purpose is explicit from the header and all account/model/update metadata is aligned and readable.
 3. Quota cards use a 10-segment remaining-quota rail rather than the generic linear `ProgressView`.
 4. Remaining quota is green at 50% and above, orange from 20% through values below 50%, and red below 20%.

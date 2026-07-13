@@ -99,7 +99,10 @@ public struct StatusPanelPresentation: Equatable, Sendable {
                 "Codex 账号"
             }
         }
-        planText = snapshot.plan?.uppercased()
+        planText = Self.planDisplayText(
+            for: snapshot.plan,
+            provider: snapshot.provider
+        )
         modelText = snapshot.model
         updatedText = "更新于 \(QuotaFormatter.clock(for: snapshot.updatedAt, timeZone: timeZone))"
         let cards = snapshot.quotas
@@ -113,6 +116,22 @@ public struct StatusPanelPresentation: Equatable, Sendable {
             }
         quotaCards = cards
         requiresQuotaOverflow = cards.count > 4
+    }
+
+    private static func planDisplayText(
+        for plan: String?,
+        provider: ProviderKind
+    ) -> String? {
+        guard let plan else { return nil }
+        let normalized = plan.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else { return nil }
+
+        return switch (provider, normalized.lowercased()) {
+        case (.codex, "pro"):
+            "PRO 20X"
+        default:
+            normalized.uppercased()
+        }
     }
 
     private static func quotaDisplayOrder(
