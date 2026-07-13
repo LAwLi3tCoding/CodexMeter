@@ -15,7 +15,7 @@ struct PanelFooterView: View {
             ) {
                 VStack(alignment: .leading, spacing: 1) {
                     Text("自动刷新")
-                    Text("每 1 分钟")
+                    Text("后台自动更新")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }

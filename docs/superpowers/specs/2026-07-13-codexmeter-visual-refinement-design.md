@@ -1,6 +1,6 @@
 # CodexMeter Visual Refinement Specification
 
-**Date:** 2026-07-13  
+**Date:** 2026-07-13
 **Status:** Approved by the user's explicit visual-refinement request
 
 ## Goal
@@ -28,7 +28,8 @@ The selected direction uses system typography, semantic surfaces, SF Symbols, su
 
 ## Panel composition
 
-- Preserve the non-scrolling, two-column quota dashboard and render every quota window.
+- Render the common two-to-four-card case directly in a non-scrolling, two-column quota grid.
+- When more than four quota cards are present, keep the same complete two-column grid inside a vertical overflow fallback capped at 410 points so every card remains reachable without making the transient panel unbounded.
 - Increase the panel width slightly from 448 to 464 points to give numbers, reset time, and metadata a stable baseline without increasing height.
 - Replace hard divider-led sections with a single grouped dashboard surface and spacing-led hierarchy:
   - identity header;
@@ -77,10 +78,10 @@ There is no fourth visual color. The existing low/critical distinction is collap
 ## Architecture
 
 - `MenuBarPresentation` owns all status-item strings and the dashboard symbol name.
-- `QuotaCardPresentation` owns quota-level classification; SwiftUI does not recalculate thresholds.
+- `QuotaCardPresentation` owns quota-level classification and all 10 segment fill amounts; SwiftUI does not recalculate thresholds or gauge progress.
 - `MenuBarLabel`, `PanelHeaderView`, `QuotaCardView`, and `PanelFooterView` remain focused on rendering.
-- A new private segmented-gauge view lives beside `QuotaCardView`; it accepts only normalized progress, semantic color, and accessibility state.
-- Source-contract tests protect the fixed-width, two-column, no-scroll layout and the use of a segmented gauge.
+- A private segmented-gauge view lives beside `QuotaCardView`; it accepts presentation-owned fill amounts and a semantic color.
+- Source-contract tests protect the fixed-width, two-column layout, the presentation-gated overflow fallback, and the use of presentation-owned segment fill amounts.
 
 ## Acceptance criteria
 
@@ -88,6 +89,6 @@ There is no fourth visual color. The existing low/critical distinction is collap
 2. The panel purpose is explicit from the header and all account/model/update metadata is aligned and readable.
 3. Quota cards use a 10-segment remaining-quota rail rather than the generic linear `ProgressView`.
 4. Remaining quota is green at 50% and above, orange from 20% through values below 50%, and red below 20%.
-5. Every quota window remains visible without scrolling or disclosure.
+5. Two through four quota windows render without internal scrolling; larger collections retain every card in a bounded 410-point overflow region without disclosure or truncation.
 6. Dark Mode, Reduce Motion, Differentiate Without Color, VoiceOver summaries, refresh controls, and error states remain supported.
 7. Presentation tests, layout source-contract tests, the full test harness, and a release build pass.

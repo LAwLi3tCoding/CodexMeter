@@ -1,7 +1,9 @@
 # CodexMeter Panel Redesign Specification
 
 **Date:** 2026-07-13
-**Status:** Approved by the user's explicit redesign request
+**Status:** Superseded by the [CodexMeter Visual Refinement Specification](2026-07-13-codexmeter-visual-refinement-design.md)
+
+This document records the earlier redesign direction. The linked specification is the current source of truth, including its bounded overflow fallback for collections larger than four quota cards.
 
 ## Goal
 

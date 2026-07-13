@@ -76,8 +76,8 @@ private struct MetadataItem: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(label)
-                .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(.tertiary)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
                 .tracking(0.6)
 
             Text(value)

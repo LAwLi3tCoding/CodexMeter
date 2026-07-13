@@ -6,6 +6,8 @@ ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 PANEL_FILE="$ROOT_DIR/Sources/CodexMeterApp/UI/StatusPanelView.swift"
 MENU_BAR_FILE="$ROOT_DIR/Sources/CodexMeterApp/MenuBar/MenuBarLabel.swift"
 QUOTA_CARD_FILE="$ROOT_DIR/Sources/CodexMeterApp/UI/QuotaCardView.swift"
+PANEL_HEADER_FILE="$ROOT_DIR/Sources/CodexMeterApp/UI/PanelHeaderView.swift"
+PANEL_FOOTER_FILE="$ROOT_DIR/Sources/CodexMeterApp/UI/PanelFooterView.swift"
 
 fail() {
   echo "FAIL [panel-layout] $1" >&2
@@ -39,5 +41,14 @@ grep -Fq 'fillAmounts: presentation.segmentFillAmounts' "$QUOTA_CARD_FILE" \
 if grep -Fq 'ProgressView(value: presentation.progress)' "$QUOTA_CARD_FILE"; then
   fail "quota cards must not use the generic linear progress view"
 fi
+grep -Fq '.easeOut(duration: 0.22)' "$QUOTA_CARD_FILE" \
+  || fail "quota gauge changes must use an ease-out transition"
+if grep -Eq '\.font\(\.system\(size: 9|\.foregroundStyle\(\.tertiary\)' "$PANEL_HEADER_FILE"; then
+  fail "metadata labels must use semantic caption typography and secondary color"
+fi
+[[ "$(grep -Fc '.font(.caption2.weight(.semibold))' "$PANEL_HEADER_FILE")" -ge 2 ]] \
+  || fail "metadata labels must use caption2 semibold typography"
+grep -Fq 'Text("后台自动更新")' "$PANEL_FOOTER_FILE" \
+  || fail "auto-refresh detail must not promise a fixed cadence"
 
 echo "PASS [panel-layout] common quotas use the grid and large collections have bounded overflow"

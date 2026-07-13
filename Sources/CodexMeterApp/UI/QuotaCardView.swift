@@ -48,7 +48,7 @@ struct QuotaCardView: View {
                 tint: accentColor
             )
                 .animation(
-                    reduceMotion ? nil : .easeInOut(duration: 0.22),
+                    reduceMotion ? nil : .easeOut(duration: 0.22),
                     value: presentation.progress
                 )
 
