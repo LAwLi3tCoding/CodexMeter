@@ -51,6 +51,16 @@ let quotaCardPresentation: [HarnessTest] = [
         suite: "ui-presentation",
         name: "Panel keeps and sorts every quota card",
         body: testPanelQuotaCardOrdering
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Panel keeps two through four quota cards unscrolled",
+        body: testPanelCommonQuotaCountsDoNotRequireOverflow
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Panel requires overflow beyond four quota cards",
+        body: testPanelLargeQuotaCountRequiresOverflow
     )
 ]
 
@@ -233,6 +243,40 @@ private func testPanelQuotaCardOrdering() {
             "unknown.primary"
         ]
     )
+}
+
+private func testPanelCommonQuotaCountsDoNotRequireOverflow() {
+    for count in 2...4 {
+        let presentation = makePanelPresentation(quotaCount: count)
+
+        expectEqual(presentation.requiresQuotaOverflow, false)
+    }
+}
+
+private func testPanelLargeQuotaCountRequiresOverflow() {
+    let presentation = makePanelPresentation(quotaCount: 5)
+
+    expectEqual(presentation.requiresQuotaOverflow, true)
+}
+
+private func makePanelPresentation(quotaCount: Int) -> StatusPanelPresentation {
+    let quotas = (0..<quotaCount).map { index in
+        makePresentationQuota(
+            id: "codex.\(index)",
+            limitID: "codex.\(index)",
+            usedPercent: Double(index)
+        )
+    }
+    let snapshot = ProviderSnapshot(
+        provider: .codex,
+        account: "developer@example.com",
+        plan: "pro",
+        model: "gpt-5.5",
+        quotas: quotas,
+        updatedAt: Date(timeIntervalSince1970: 500)
+    )
+
+    return StatusPanelPresentation(snapshot: snapshot)
 }
 
 private func makePresentationQuota(

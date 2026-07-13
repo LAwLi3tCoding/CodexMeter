@@ -63,16 +63,13 @@ struct StatusPanelView: View {
                     title: "暂无额度数据",
                     message: "Codex CLI 没有返回可展示的额度窗口。"
                 )
-            } else {
-                LazyVGrid(
-                    columns: quotaColumns,
-                    alignment: .leading,
-                    spacing: 10
-                ) {
-                    ForEach(presentation.quotaCards, id: \.id) { card in
-                        QuotaCardView(presentation: card)
-                    }
+            } else if presentation.requiresQuotaOverflow {
+                ScrollView {
+                    quotaGrid(presentation: presentation)
                 }
+                .frame(maxHeight: 410)
+            } else {
+                quotaGrid(presentation: presentation)
             }
         } else if store.isRefreshing {
             StatusMessageView(
@@ -94,6 +91,20 @@ struct StatusPanelView: View {
                 title: "等待额度数据",
                 message: "CodexMeter 将自动刷新。"
             )
+        }
+    }
+
+    private func quotaGrid(
+        presentation: StatusPanelPresentation
+    ) -> some View {
+        LazyVGrid(
+            columns: quotaColumns,
+            alignment: .leading,
+            spacing: 10
+        ) {
+            ForEach(presentation.quotaCards, id: \.id) { card in
+                QuotaCardView(presentation: card)
+            }
         }
     }
 }

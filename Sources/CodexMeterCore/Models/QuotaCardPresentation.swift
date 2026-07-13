@@ -80,6 +80,7 @@ public struct StatusPanelPresentation: Equatable, Sendable {
     public let modelText: String
     public let updatedText: String
     public let quotaCards: [QuotaCardPresentation]
+    public let requiresQuotaOverflow: Bool
 
     public init(
         snapshot: ProviderSnapshot,
@@ -101,7 +102,7 @@ public struct StatusPanelPresentation: Equatable, Sendable {
         planText = snapshot.plan?.uppercased()
         modelText = snapshot.model
         updatedText = "更新于 \(QuotaFormatter.clock(for: snapshot.updatedAt, timeZone: timeZone))"
-        quotaCards = snapshot.quotas
+        let cards = snapshot.quotas
             .sorted(by: Self.quotaDisplayOrder)
             .map {
                 QuotaCardPresentation(
@@ -110,6 +111,8 @@ public struct StatusPanelPresentation: Equatable, Sendable {
                     timeZone: timeZone
                 )
             }
+        quotaCards = cards
+        requiresQuotaOverflow = cards.count > 4
     }
 
     private static func quotaDisplayOrder(
