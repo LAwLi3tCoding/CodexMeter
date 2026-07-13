@@ -54,7 +54,7 @@ else
   readonly INSTALL_DIR="$HOME/Applications"
 fi
 
-for command_name in curl ditto shasum codesign; do
+for command_name in curl ditto shasum codesign plutil; do
   if ! command -v "$command_name" >/dev/null 2>&1; then
     echo "Required command not found: $command_name" >&2
     exit 1
@@ -106,6 +106,47 @@ if [[ ! -d "$DOWNLOADED_APP" ]]; then
   exit 1
 fi
 
+readonly INFO_PLIST="$DOWNLOADED_APP/Contents/Info.plist"
+readonly WIDGET_DIR="$DOWNLOADED_APP/Contents/PlugIns/CodexMeterWidget.appex"
+readonly WIDGET_INFO_PLIST="$WIDGET_DIR/Contents/Info.plist"
+readonly WIDGET_EXECUTABLE="$WIDGET_DIR/Contents/MacOS/CodexMeterWidget"
+
+if [[ ! -f "$INFO_PLIST" ]]; then
+  echo "Release app does not contain Info.plist." >&2
+  exit 1
+fi
+
+if [[ ! -d "$WIDGET_DIR" || ! -f "$WIDGET_INFO_PLIST" || ! -x "$WIDGET_EXECUTABLE" ]]; then
+  echo "Invalid CodexMeter widget bundle: $WIDGET_DIR" >&2
+  exit 1
+fi
+
+WIDGET_BUNDLE_ID="$(plutil -extract CFBundleIdentifier raw -o - "$WIDGET_INFO_PLIST" 2>/dev/null || true)"
+if [[ "$WIDGET_BUNDLE_ID" != "com.codexmeter.CodexMeter.Widget" ]]; then
+  echo "Invalid widget CFBundleIdentifier: ${WIDGET_BUNDLE_ID:-<missing>}." >&2
+  exit 1
+fi
+
+WIDGET_EXTENSION_POINT="$(plutil -extract NSExtension.NSExtensionPointIdentifier raw -o - "$WIDGET_INFO_PLIST" 2>/dev/null || true)"
+if [[ "$WIDGET_EXTENSION_POINT" != "com.apple.widgetkit-extension" ]]; then
+  echo "Invalid widget extension point: ${WIDGET_EXTENSION_POINT:-<missing>}." >&2
+  exit 1
+fi
+
+WIDGET_EXECUTABLE_NAME="$(plutil -extract CFBundleExecutable raw -o - "$WIDGET_INFO_PLIST" 2>/dev/null || true)"
+if [[ "$WIDGET_EXECUTABLE_NAME" != "CodexMeterWidget" ]]; then
+  echo "Invalid widget CFBundleExecutable: ${WIDGET_EXECUTABLE_NAME:-<missing>}." >&2
+  exit 1
+fi
+
+readonly APP_VERSION="$(plutil -extract CFBundleShortVersionString raw -o - "$INFO_PLIST")"
+readonly WIDGET_VERSION="$(plutil -extract CFBundleShortVersionString raw -o - "$WIDGET_INFO_PLIST")"
+if [[ "$WIDGET_VERSION" != "$APP_VERSION" ]]; then
+  echo "Widget version $WIDGET_VERSION does not match app version $APP_VERSION." >&2
+  exit 1
+fi
+
+codesign --verify --strict "$WIDGET_DIR"
 codesign --verify --deep --strict "$DOWNLOADED_APP"
 
 mkdir -p "$INSTALL_DIR"

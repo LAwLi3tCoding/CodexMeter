@@ -18,10 +18,16 @@ fail() {
 make_fake_app() {
   local app_dir="$1"
   local version="$2"
+  local widget_dir="$app_dir/Contents/PlugIns/CodexMeterWidget.appex"
 
-  mkdir -p "$app_dir/Contents/MacOS" "$app_dir/Contents/Resources"
+  mkdir -p \
+    "$app_dir/Contents/MacOS" \
+    "$app_dir/Contents/Resources" \
+    "$widget_dir/Contents/MacOS"
   print -r -- "binary" > "$app_dir/Contents/MacOS/CodexMeter"
   chmod +x "$app_dir/Contents/MacOS/CodexMeter"
+  print -r -- "widget binary" > "$widget_dir/Contents/MacOS/CodexMeterWidget"
+  chmod +x "$widget_dir/Contents/MacOS/CodexMeterWidget"
   print -r -- "placeholder icon" > "$app_dir/Contents/Resources/CodexMeter.icns"
   cat > "$app_dir/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -32,6 +38,29 @@ make_fake_app() {
   <string>$version</string>
   <key>CFBundleIconFile</key>
   <string>CodexMeter</string>
+</dict>
+</plist>
+EOF
+  cat > "$widget_dir/Contents/Info.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleExecutable</key>
+  <string>CodexMeterWidget</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.codexmeter.CodexMeter.Widget</string>
+  <key>CFBundleShortVersionString</key>
+  <string>$version</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>CFBundlePackageType</key>
+  <string>XPC!</string>
+  <key>NSExtension</key>
+  <dict>
+    <key>NSExtensionPointIdentifier</key>
+    <string>com.apple.widgetkit-extension</string>
+  </dict>
 </dict>
 </plist>
 EOF
@@ -146,10 +175,49 @@ test_rejects_icon_metadata_mismatch() {
     || fail "icon metadata error is unclear: $output"
 }
 
+test_rejects_missing_widget_extension() {
+  local case_dir="$TEST_ROOT/missing-widget"
+  local app_dir="$case_dir/CodexMeter.app"
+  local output_dir="$case_dir/dist"
+  local bin_dir="$case_dir/bin"
+
+  make_fake_app "$app_dir" "0.1.0"
+  make_fake_commands "$bin_dir"
+  rm -rf "$app_dir/Contents/PlugIns/CodexMeterWidget.appex"
+
+  if CODEXMETER_APP_PATH="$app_dir" \
+    CODEXMETER_OUTPUT_DIR="$output_dir" \
+    PATH="$bin_dir:$PATH" \
+    zsh "$PACKAGE_SCRIPT" v0.1.0 >/dev/null 2>&1; then
+    fail "packager accepted an app without CodexMeterWidget.appex"
+  fi
+}
+
+test_rejects_invalid_widget_extension_point() {
+  local case_dir="$TEST_ROOT/invalid-widget-point"
+  local app_dir="$case_dir/CodexMeter.app"
+  local output_dir="$case_dir/dist"
+  local bin_dir="$case_dir/bin"
+  local widget_info="$app_dir/Contents/PlugIns/CodexMeterWidget.appex/Contents/Info.plist"
+
+  make_fake_app "$app_dir" "0.1.0"
+  make_fake_commands "$bin_dir"
+  plutil -replace NSExtension.NSExtensionPointIdentifier -string com.apple.invalid-extension "$widget_info"
+
+  if CODEXMETER_APP_PATH="$app_dir" \
+    CODEXMETER_OUTPUT_DIR="$output_dir" \
+    PATH="$bin_dir:$PATH" \
+    zsh "$PACKAGE_SCRIPT" v0.1.0 >/dev/null 2>&1; then
+    fail "packager accepted an invalid widget extension point"
+  fi
+}
+
 test_help
 test_packages_matching_app_version
 test_rejects_version_mismatch
 test_rejects_missing_icon
 test_rejects_icon_metadata_mismatch
+test_rejects_missing_widget_extension
+test_rejects_invalid_widget_extension_point
 
 echo "PASS: release packaging script"

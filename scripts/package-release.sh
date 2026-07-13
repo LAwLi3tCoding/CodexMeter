@@ -40,6 +40,9 @@ fi
 readonly INFO_PLIST="$APP_DIR/Contents/Info.plist"
 readonly EXECUTABLE="$APP_DIR/Contents/MacOS/CodexMeter"
 readonly ICON_PATH="$APP_DIR/Contents/Resources/CodexMeter.icns"
+readonly WIDGET_DIR="$APP_DIR/Contents/PlugIns/CodexMeterWidget.appex"
+readonly WIDGET_INFO_PLIST="$WIDGET_DIR/Contents/Info.plist"
+readonly WIDGET_EXECUTABLE="$WIDGET_DIR/Contents/MacOS/CodexMeterWidget"
 
 if [[ ! -d "$APP_DIR" || ! -f "$INFO_PLIST" || ! -x "$EXECUTABLE" ]]; then
   echo "Invalid CodexMeter app bundle: $APP_DIR" >&2
@@ -51,6 +54,29 @@ if [[ ! -f "$ICON_PATH" ]]; then
   exit 1
 fi
 
+if [[ ! -d "$WIDGET_DIR" || ! -f "$WIDGET_INFO_PLIST" || ! -x "$WIDGET_EXECUTABLE" ]]; then
+  echo "Invalid CodexMeter widget bundle: $WIDGET_DIR" >&2
+  exit 1
+fi
+
+WIDGET_BUNDLE_ID="$(plutil -extract CFBundleIdentifier raw -o - "$WIDGET_INFO_PLIST" 2>/dev/null || true)"
+if [[ "$WIDGET_BUNDLE_ID" != "com.codexmeter.CodexMeter.Widget" ]]; then
+  echo "Invalid widget CFBundleIdentifier: ${WIDGET_BUNDLE_ID:-<missing>}." >&2
+  exit 1
+fi
+
+WIDGET_EXTENSION_POINT="$(plutil -extract NSExtension.NSExtensionPointIdentifier raw -o - "$WIDGET_INFO_PLIST" 2>/dev/null || true)"
+if [[ "$WIDGET_EXTENSION_POINT" != "com.apple.widgetkit-extension" ]]; then
+  echo "Invalid widget extension point: ${WIDGET_EXTENSION_POINT:-<missing>}." >&2
+  exit 1
+fi
+
+WIDGET_EXECUTABLE_NAME="$(plutil -extract CFBundleExecutable raw -o - "$WIDGET_INFO_PLIST" 2>/dev/null || true)"
+if [[ "$WIDGET_EXECUTABLE_NAME" != "CodexMeterWidget" ]]; then
+  echo "Invalid widget CFBundleExecutable: ${WIDGET_EXECUTABLE_NAME:-<missing>}." >&2
+  exit 1
+fi
+
 ICON_NAME="$(plutil -extract CFBundleIconFile raw -o - "$INFO_PLIST" 2>/dev/null || true)"
 if [[ "$ICON_NAME" != "CodexMeter" ]]; then
   echo "Invalid CFBundleIconFile: expected CodexMeter, found ${ICON_NAME:-<missing>}." >&2
@@ -58,11 +84,18 @@ if [[ "$ICON_NAME" != "CodexMeter" ]]; then
 fi
 
 readonly APP_VERSION="$(plutil -extract CFBundleShortVersionString raw -o - "$INFO_PLIST")"
+readonly WIDGET_VERSION="$(plutil -extract CFBundleShortVersionString raw -o - "$WIDGET_INFO_PLIST")"
 if [[ "$APP_VERSION" != "$RELEASE_VERSION" ]]; then
   echo "Release tag $RELEASE_TAG does not match app version $APP_VERSION." >&2
   exit 1
 fi
 
+if [[ "$WIDGET_VERSION" != "$APP_VERSION" ]]; then
+  echo "Widget version $WIDGET_VERSION does not match app version $APP_VERSION." >&2
+  exit 1
+fi
+
+codesign --verify --strict "$WIDGET_DIR"
 codesign --verify --deep --strict "$APP_DIR"
 
 readonly ARCHS="$(lipo -archs "$EXECUTABLE")"
