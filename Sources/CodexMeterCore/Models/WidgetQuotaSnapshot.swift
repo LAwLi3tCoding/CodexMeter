@@ -35,14 +35,14 @@ public struct WidgetQuotaSnapshot: Codable, Equatable, Sendable {
     public static let currentSchemaVersion = 1
 
     public let schemaVersion: Int
-    public let plan: String?
+    public let provider: ProviderKind
     public let model: String
     public let quotas: [WidgetQuotaItem]
     public let updatedAt: Date
 
     public init(snapshot: ProviderSnapshot) {
         schemaVersion = Self.currentSchemaVersion
-        plan = snapshot.plan
+        provider = snapshot.provider
         model = snapshot.model
         quotas = snapshot.quotas.map { quota in
             WidgetQuotaItem(

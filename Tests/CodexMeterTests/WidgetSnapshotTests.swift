@@ -36,7 +36,6 @@ private func testWidgetSnapshotRoundTrip() throws {
     expectEqual(WidgetConfiguration.snapshotKey, "widget.quota.snapshot.v1")
     expectEqual(WidgetConfiguration.widgetKind, "com.codexmeter.CodexMeter.quota-widget")
     expectEqual(widget.schemaVersion, WidgetQuotaSnapshot.currentSchemaVersion)
-    expectEqual(widget.plan, "plus")
     expectEqual(widget.model, "gpt-5.5")
     expectEqual(widget.updatedAt, providerSnapshot.updatedAt)
     expectEqual(widget.quotas.count, 2)
@@ -48,9 +47,25 @@ private func testWidgetSnapshotRoundTrip() throws {
 
     expectEqual(store.read(), widget)
     let encoded = defaults.data(forKey: WidgetConfiguration.snapshotKey)!
-    let encodedText = String(decoding: encoded, as: UTF8.self)
-    expectEqual(encodedText.contains("developer@example.com"), false)
-    expectEqual(encodedText.contains("account"), false)
+    let object = try JSONSerialization.jsonObject(with: encoded) as! [String: Any]
+    expectEqual(
+        Set(object.keys),
+        Set(["schemaVersion", "provider", "model", "updatedAt", "quotas"])
+    )
+    expectEqual(object["provider"] as? String, "codex")
+
+    let quotas = object["quotas"] as! [[String: Any]]
+    expectEqual(
+        Set(quotas[0].keys),
+        Set([
+            "id",
+            "label",
+            "model",
+            "remainingPercent",
+            "resetTime",
+            "windowDurationMinutes"
+        ])
+    )
 }
 
 private func testWidgetSnapshotDateEncoding() throws {
