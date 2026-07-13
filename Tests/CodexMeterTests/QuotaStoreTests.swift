@@ -39,10 +39,12 @@ private func testRefreshSuccess() async throws {
     let snapshot = makeSnapshot(remainingPercentage: 25)
     let provider = StubQuotaProvider(results: [.success(snapshot)])
     let notifier = RecordingNotifier()
+    let widgetPublisher = RecordingWidgetSnapshotPublisher()
     let store = QuotaStore(
         provider: provider,
         settings: makeSettingsStore(),
-        notifier: notifier
+        notifier: notifier,
+        widgetPublisher: widgetPublisher
     )
 
     await store.refresh()
@@ -50,6 +52,7 @@ private func testRefreshSuccess() async throws {
     expectEqual(store.snapshot, snapshot)
     expectNil(store.failure)
     expectEqual(await notifier.deliveredThresholds(), [30])
+    expectEqual(await widgetPublisher.snapshots(), [snapshot])
 }
 
 @MainActor
@@ -59,10 +62,12 @@ private func testStaleSnapshotRetention() async throws {
         .success(snapshot),
         .failure(ProviderError.serviceUnavailable)
     ])
+    let widgetPublisher = RecordingWidgetSnapshotPublisher()
     let store = QuotaStore(
         provider: provider,
         settings: makeSettingsStore(),
-        notifier: RecordingNotifier()
+        notifier: RecordingNotifier(),
+        widgetPublisher: widgetPublisher
     )
 
     await store.refresh()
@@ -70,6 +75,7 @@ private func testStaleSnapshotRetention() async throws {
 
     expectEqual(store.snapshot, snapshot)
     expectEqual(store.failure, .serviceUnavailable)
+    expectEqual(await widgetPublisher.snapshots(), [snapshot])
 }
 
 @MainActor
@@ -173,6 +179,18 @@ private actor RecordingNotifier: NotificationDelivering {
 
     func deliveredThresholds() -> [Int] {
         thresholds
+    }
+}
+
+private actor RecordingWidgetSnapshotPublisher: WidgetSnapshotPublishing {
+    private var publishedSnapshots: [ProviderSnapshot] = []
+
+    func publish(_ snapshot: ProviderSnapshot) async {
+        publishedSnapshots.append(snapshot)
+    }
+
+    func snapshots() -> [ProviderSnapshot] {
+        publishedSnapshots
     }
 }
 

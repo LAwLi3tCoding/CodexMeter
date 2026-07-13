@@ -26,6 +26,14 @@ extension QuotaStoreFailure: LocalizedError {
     }
 }
 
+public protocol WidgetSnapshotPublishing: Sendable {
+    func publish(_ snapshot: ProviderSnapshot) async
+}
+
+private struct NoOpWidgetSnapshotPublisher: WidgetSnapshotPublishing {
+    func publish(_ snapshot: ProviderSnapshot) async {}
+}
+
 @MainActor
 public final class QuotaStore: ObservableObject {
     @Published public private(set) var snapshot: ProviderSnapshot?
@@ -37,6 +45,7 @@ public final class QuotaStore: ObservableObject {
     private let settings: SettingsStore
     private let notifier: any NotificationDelivering
     private let notificationPolicy: NotificationPolicy
+    private let widgetPublisher: any WidgetSnapshotPublishing
     private var autoRefreshTask: Task<Void, Never>?
     private var refreshTask: Task<Void, Never>?
     private var refreshGeneration = 0
@@ -46,12 +55,14 @@ public final class QuotaStore: ObservableObject {
         provider: any QuotaProvider,
         settings: SettingsStore = SettingsStore(),
         notifier: any NotificationDelivering = NotificationService(),
-        notificationPolicy: NotificationPolicy = NotificationPolicy()
+        notificationPolicy: NotificationPolicy = NotificationPolicy(),
+        widgetPublisher: (any WidgetSnapshotPublishing)? = nil
     ) {
         self.provider = provider
         self.settings = settings
         self.notifier = notifier
         self.notificationPolicy = notificationPolicy
+        self.widgetPublisher = widgetPublisher ?? NoOpWidgetSnapshotPublisher()
         self.autoRefreshEnabled = settings.autoRefreshEnabled
     }
 
@@ -123,6 +134,7 @@ public final class QuotaStore: ObservableObject {
             guard !Task.isCancelled else { return }
             snapshot = newSnapshot
             failure = nil
+            await widgetPublisher.publish(newSnapshot)
             await evaluateNotifications(for: newSnapshot)
         } catch {
             guard !Task.isCancelled else { return }
