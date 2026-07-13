@@ -22,6 +22,7 @@ rm -rf "$APP_DIR"
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 install -m 755 "$BIN_DIR/CodexMeter" "$MACOS_DIR/CodexMeter"
 install -m 644 "$ROOT_DIR/Resources/Info.plist" "$CONTENTS_DIR/Info.plist"
+install -m 644 "$ROOT_DIR/Resources/CodexMeter.icns" "$RESOURCES_DIR/CodexMeter.icns"
 printf 'APPL????' > "$CONTENTS_DIR/PkgInfo"
 
 plutil -lint "$CONTENTS_DIR/Info.plist"

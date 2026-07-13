@@ -24,6 +24,7 @@ Run before submitting:
 ```bash
 swift run CodexMeterTests
 swift build -Xswiftc -warnings-as-errors
+zsh Tests/Scripts/AppIconTests.sh
 zsh Tests/Scripts/InstallScriptTests.sh
 zsh Tests/Scripts/PackageReleaseScriptTests.sh
 ./scripts/build-app.sh

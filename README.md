@@ -1,5 +1,9 @@
 # CodexMeter
 
+<p align="center">
+  <img src="Resources/AppIcon.png" width="128" alt="CodexMeter app icon">
+</p>
+
 CodexMeter is a native macOS menu bar app that shows the remaining quota reported by the locally installed OpenAI Codex CLI. It uses Swift, SwiftUI, and `MenuBarExtra`, stays out of the Dock, and refreshes without asking users to paste a token.
 
 ## Features

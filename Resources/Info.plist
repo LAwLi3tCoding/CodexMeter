@@ -10,6 +10,8 @@
     <string>CodexMeter</string>
     <key>CFBundleIdentifier</key>
     <string>com.codexmeter.CodexMeter</string>
+    <key>CFBundleIconFile</key>
+    <string>CodexMeter</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
