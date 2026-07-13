@@ -19,9 +19,10 @@ make_fake_app() {
   local app_dir="$1"
   local version="$2"
 
-  mkdir -p "$app_dir/Contents/MacOS"
+  mkdir -p "$app_dir/Contents/MacOS" "$app_dir/Contents/Resources"
   print -r -- "binary" > "$app_dir/Contents/MacOS/CodexMeter"
   chmod +x "$app_dir/Contents/MacOS/CodexMeter"
+  print -r -- "placeholder icon" > "$app_dir/Contents/Resources/CodexMeter.icns"
   cat > "$app_dir/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -29,6 +30,8 @@ make_fake_app() {
 <dict>
   <key>CFBundleShortVersionString</key>
   <string>$version</string>
+  <key>CFBundleIconFile</key>
+  <string>CodexMeter</string>
 </dict>
 </plist>
 EOF
@@ -97,8 +100,56 @@ test_rejects_version_mismatch() {
   fi
 }
 
+test_rejects_missing_icon() {
+  local case_dir="$TEST_ROOT/missing-icon"
+  local app_dir="$case_dir/CodexMeter.app"
+  local output_dir="$case_dir/dist"
+  local bin_dir="$case_dir/bin"
+  local output
+
+  make_fake_app "$app_dir" "0.1.0"
+  make_fake_commands "$bin_dir"
+  rm "$app_dir/Contents/Resources/CodexMeter.icns"
+
+  if output="$(
+    CODEXMETER_APP_PATH="$app_dir" \
+    CODEXMETER_OUTPUT_DIR="$output_dir" \
+    PATH="$bin_dir:$PATH" \
+    zsh "$PACKAGE_SCRIPT" v0.1.0 2>&1
+  )"; then
+    fail "packager accepted an app without CodexMeter.icns"
+  fi
+  [[ "$output" == *"Missing app icon: $app_dir/Contents/Resources/CodexMeter.icns"* ]] \
+    || fail "missing icon error is unclear: $output"
+}
+
+test_rejects_icon_metadata_mismatch() {
+  local case_dir="$TEST_ROOT/icon-metadata-mismatch"
+  local app_dir="$case_dir/CodexMeter.app"
+  local output_dir="$case_dir/dist"
+  local bin_dir="$case_dir/bin"
+  local output
+
+  make_fake_app "$app_dir" "0.1.0"
+  make_fake_commands "$bin_dir"
+  plutil -replace CFBundleIconFile -string OtherIcon "$app_dir/Contents/Info.plist"
+
+  if output="$(
+    CODEXMETER_APP_PATH="$app_dir" \
+    CODEXMETER_OUTPUT_DIR="$output_dir" \
+    PATH="$bin_dir:$PATH" \
+    zsh "$PACKAGE_SCRIPT" v0.1.0 2>&1
+  )"; then
+    fail "packager accepted mismatched icon metadata"
+  fi
+  [[ "$output" == *"Invalid CFBundleIconFile: expected CodexMeter, found OtherIcon."* ]] \
+    || fail "icon metadata error is unclear: $output"
+}
+
 test_help
 test_packages_matching_app_version
 test_rejects_version_mismatch
+test_rejects_missing_icon
+test_rejects_icon_metadata_mismatch
 
 echo "PASS: release packaging script"

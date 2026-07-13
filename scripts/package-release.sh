@@ -39,9 +39,21 @@ fi
 
 readonly INFO_PLIST="$APP_DIR/Contents/Info.plist"
 readonly EXECUTABLE="$APP_DIR/Contents/MacOS/CodexMeter"
+readonly ICON_PATH="$APP_DIR/Contents/Resources/CodexMeter.icns"
 
 if [[ ! -d "$APP_DIR" || ! -f "$INFO_PLIST" || ! -x "$EXECUTABLE" ]]; then
   echo "Invalid CodexMeter app bundle: $APP_DIR" >&2
+  exit 1
+fi
+
+if [[ ! -f "$ICON_PATH" ]]; then
+  echo "Missing app icon: $ICON_PATH" >&2
+  exit 1
+fi
+
+ICON_NAME="$(plutil -extract CFBundleIconFile raw -o - "$INFO_PLIST" 2>/dev/null || true)"
+if [[ "$ICON_NAME" != "CodexMeter" ]]; then
+  echo "Invalid CFBundleIconFile: expected CodexMeter, found ${ICON_NAME:-<missing>}." >&2
   exit 1
 fi
 
