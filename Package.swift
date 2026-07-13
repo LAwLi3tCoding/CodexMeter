@@ -10,6 +10,7 @@ let package = Package(
     products: [
         .library(name: "CodexMeterCore", targets: ["CodexMeterCore"]),
         .executable(name: "CodexMeter", targets: ["CodexMeter"]),
+        .executable(name: "CodexMeterWidget", targets: ["CodexMeterWidget"]),
         .executable(name: "CodexMeterTests", targets: ["CodexMeterTests"])
     ],
     targets: [
@@ -18,6 +19,10 @@ let package = Package(
             name: "CodexMeter",
             dependencies: ["CodexMeterCore"],
             path: "Sources/CodexMeterApp"
+        ),
+        .executableTarget(
+            name: "CodexMeterWidget",
+            dependencies: ["CodexMeterCore"]
         ),
         .executableTarget(
             name: "CodexMeterTests",
