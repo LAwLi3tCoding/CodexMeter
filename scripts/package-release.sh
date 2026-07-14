@@ -49,8 +49,14 @@ assert_release_binary_private() {
   local binary="$1"
   local label="$2"
   local printable_strings
+  local local_path_pattern
+  local macos_home_prefix linux_home_prefix macos_temp_prefix
   local public_domain_pattern
 
+  macos_home_prefix=$'\x2f\x55\x73\x65\x72\x73\x2f'
+  linux_home_prefix=$'\x2f\x68\x6f\x6d\x65\x2f'
+  macos_temp_prefix=$'\x2f\x76\x61\x72\x2f\x66\x6f\x6c\x64\x65\x72\x73\x2f'
+  local_path_pattern="${macos_home_prefix}|${linux_home_prefix}|${macos_temp_prefix}"
   public_domain_pattern='([a-z0-9-]+\.)+([a-z]{2}|com|net|org|edu|gov|int|mil|info|biz|name|pro|mobi|travel|jobs|museum|aero|asia|cat|tel|dev|app|cloud|tech|xyz|solutions|company|technology|software|systems|digital|online|site|store|agency|tools|services|engineering|consulting|business|work)[[:>:]]'
 
   if ! printable_strings="$(strings -a - < "$binary")"; then
@@ -59,7 +65,7 @@ assert_release_binary_private() {
   fi
 
   if print -r -- "$printable_strings" \
-    | LC_ALL=C grep -E '/Users/|/home/|/var/folders/' >/dev/null; then
+    | LC_ALL=C grep -E "$local_path_pattern" >/dev/null; then
     echo "Privacy check failed for $label: local filesystem path detected." >&2
     return 1
   fi

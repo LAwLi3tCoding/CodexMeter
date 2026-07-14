@@ -252,11 +252,12 @@ test_rejects_local_path_in_existing_app() {
   local app_dir="$case_dir/CodexMeter.app"
   local output_dir="$case_dir/dist"
   local bin_dir="$case_dir/bin"
+  local synthetic_path=$'\x2f\x55\x73\x65\x72\x73\x2f''example/private/source.swift'
   local output
 
   make_fake_app "$app_dir" "0.1.0"
   make_fake_commands "$bin_dir"
-  print -r -- "/Users/example/private/source.swift" >> "$app_dir/Contents/MacOS/CodexMeter"
+  print -r -- "$synthetic_path" >> "$app_dir/Contents/MacOS/CodexMeter"
 
   if output="$(
     CODEXMETER_APP_PATH="$app_dir" \
