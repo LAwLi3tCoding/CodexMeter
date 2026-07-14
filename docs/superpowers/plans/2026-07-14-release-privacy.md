@@ -37,7 +37,7 @@ The script builds and packages `v0.1.0`, discovers the architecture-specific arc
 ```zsh
 cmp "$ROOT_DIR/LICENSE" "$APP_DIR/Contents/Resources/LICENSE"
 unzip -p "$ZIP" 'CodexMeter.app/Contents/Resources/LICENSE' | cmp "$ROOT_DIR/LICENSE" -
-strings -a - < "$APP_EXECUTABLE" | grep -E '(/Users/|/home/|/var/folders/)'
+strings -a - < "$APP_EXECUTABLE" | grep -E "$LOCAL_PATH_PATTERN"
 unzip -Z1 "$ZIP" | grep '^__MACOSX/'
 ```
 
@@ -72,14 +72,11 @@ Expected: failures report the missing bundled license, embedded build paths, res
 - Consumes: SwiftPM release executables and root `LICENSE`.
 - Produces: a signed app whose executables contain no local build prefix and whose Resources contain the MIT text.
 
-- [ ] **Step 1: Normalize compiler paths**
+- [ ] **Step 1: Keep compiler module-cache paths valid**
 
-Append Swift compiler arguments to each build:
+Do not apply Swift file/debug prefix maps to the app products. Apple Swift records Clang module-cache references in linked debug metadata, and remapping the workspace prefix makes those PCM paths invalid during clean release builds. Keep normal compiler paths until the strip phase, then enforce privacy at the package boundary.
 
-```zsh
--Xswiftc -file-prefix-map -Xswiftc "$ROOT_DIR=."
--Xswiftc -debug-prefix-map -Xswiftc "$ROOT_DIR=."
-```
+`ReleasePrivacyTests.sh` must start from a fresh, test-owned SwiftPM scratch directory and reject the associated missing-module-cache warning so this behavior remains covered without cleaning the repository's shared `.build` directory.
 
 - [ ] **Step 2: Strip before signing and install the license**
 

@@ -15,17 +15,12 @@ SWIFT_BUILD_ARGUMENTS=(-c "$CONFIGURATION")
 if [[ "${CODEXMETER_DISABLE_SWIFTPM_SANDBOX:-0}" == "1" ]]; then
   SWIFT_BUILD_ARGUMENTS+=(--disable-sandbox)
 fi
+if [[ -n "${CODEXMETER_SWIFT_SCRATCH_PATH:-}" ]]; then
+  SWIFT_BUILD_ARGUMENTS+=(--scratch-path "$CODEXMETER_SWIFT_SCRATCH_PATH")
+fi
 
-SWIFT_PRIVACY_ARGUMENTS=(
-  -Xswiftc -file-prefix-map
-  -Xswiftc "$ROOT_DIR=."
-  -Xswiftc -debug-prefix-map
-  -Xswiftc "$ROOT_DIR=."
-)
-
-swift build "${SWIFT_BUILD_ARGUMENTS[@]}" --product CodexMeter "${SWIFT_PRIVACY_ARGUMENTS[@]}"
+swift build "${SWIFT_BUILD_ARGUMENTS[@]}" --product CodexMeter
 swift build "${SWIFT_BUILD_ARGUMENTS[@]}" --product CodexMeterWidget \
-  "${SWIFT_PRIVACY_ARGUMENTS[@]}" \
   -Xswiftc -application-extension
 BIN_DIR="$(swift build "${SWIFT_BUILD_ARGUMENTS[@]}" --show-bin-path)"
 APP_DIR="$ROOT_DIR/build/CodexMeter.app"

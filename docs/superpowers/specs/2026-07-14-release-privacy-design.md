@@ -33,19 +33,20 @@ Publish a new repository with a squashed clean history. This creates the smalles
 
 `scripts/build-app.sh` remains the single assembly boundary. It will:
 
-- pass Swift file/debug prefix maps so compiler-owned paths are normalized;
 - copy executables into the bundle;
 - strip local/debug symbol paths before code signing;
 - install the root `LICENSE` at `Contents/Resources/LICENSE`;
 - sign the widget and containing app only after all mutations are complete.
 
+Swift prefix-map flags are intentionally not used: on the supported Apple toolchain they rewrite Clang module-cache references and cause missing-PCM warnings during a clean release link. Release privacy instead relies on stripping before signing plus the package boundary's mandatory executable scan.
+
 `scripts/package-release.sh` will enforce the same privacy policy for both freshly built and externally supplied app bundles, then package without resource forks or AppleDouble metadata. The release contract will reject:
 
 - a missing or modified bundled MIT license;
-- `/Users/`, `/home/`, `/var/folders/`, personal email, or common public-domain patterns outside the explicit Apple/OpenAI/GitHub allowlist in either executable;
+- macOS/Linux user-home and temporary-directory paths, personal email, or common public-domain patterns outside the explicit Apple/OpenAI/GitHub allowlist in either executable;
 - `__MACOSX` and AppleDouble entries in the ZIP.
 
-The real-artifact test discovers the architecture-specific archive dynamically, extracts it, and verifies the final app and widget signatures rather than relying only on the pre-archive build directory.
+The real-artifact test uses an isolated SwiftPM scratch directory, discovers the architecture-specific archive dynamically, extracts it, and verifies the final app and widget signatures rather than relying only on the pre-archive build directory. This keeps its clean-build contract from deleting or replacing concurrent developer/test artifacts under the repository's shared `.build` directory.
 
 ## Repository metadata design
 
