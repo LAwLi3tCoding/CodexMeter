@@ -16,8 +16,17 @@ if [[ "${CODEXMETER_DISABLE_SWIFTPM_SANDBOX:-0}" == "1" ]]; then
   SWIFT_BUILD_ARGUMENTS+=(--disable-sandbox)
 fi
 
-swift build "${SWIFT_BUILD_ARGUMENTS[@]}" --product CodexMeter
-swift build "${SWIFT_BUILD_ARGUMENTS[@]}" --product CodexMeterWidget -Xswiftc -application-extension
+SWIFT_PRIVACY_ARGUMENTS=(
+  -Xswiftc -file-prefix-map
+  -Xswiftc "$ROOT_DIR=."
+  -Xswiftc -debug-prefix-map
+  -Xswiftc "$ROOT_DIR=."
+)
+
+swift build "${SWIFT_BUILD_ARGUMENTS[@]}" --product CodexMeter "${SWIFT_PRIVACY_ARGUMENTS[@]}"
+swift build "${SWIFT_BUILD_ARGUMENTS[@]}" --product CodexMeterWidget \
+  "${SWIFT_PRIVACY_ARGUMENTS[@]}" \
+  -Xswiftc -application-extension
 BIN_DIR="$(swift build "${SWIFT_BUILD_ARGUMENTS[@]}" --show-bin-path)"
 APP_DIR="$ROOT_DIR/build/CodexMeter.app"
 CONTENTS_DIR="$APP_DIR/Contents"
@@ -32,9 +41,15 @@ mkdir -p "$MACOS_DIR" "$RESOURCES_DIR" "$WIDGET_MACOS_DIR"
 install -m 755 "$BIN_DIR/CodexMeter" "$MACOS_DIR/CodexMeter"
 install -m 644 "$ROOT_DIR/Resources/Info.plist" "$CONTENTS_DIR/Info.plist"
 install -m 644 "$ROOT_DIR/Resources/CodexMeter.icns" "$RESOURCES_DIR/CodexMeter.icns"
+install -m 644 "$ROOT_DIR/LICENSE" "$RESOURCES_DIR/LICENSE"
 install -m 755 "$BIN_DIR/CodexMeterWidget" "$WIDGET_MACOS_DIR/CodexMeterWidget"
 install -m 644 "$ROOT_DIR/Resources/CodexMeterWidget-Info.plist" "$WIDGET_CONTENTS_DIR/Info.plist"
 printf 'APPL????' > "$CONTENTS_DIR/PkgInfo"
+
+if [[ "$CONFIGURATION" == "release" ]]; then
+  strip -S "$MACOS_DIR/CodexMeter"
+  strip -S "$WIDGET_MACOS_DIR/CodexMeterWidget"
+fi
 
 plutil -lint "$CONTENTS_DIR/Info.plist"
 plutil -lint "$WIDGET_CONTENTS_DIR/Info.plist"

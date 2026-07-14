@@ -22,6 +22,8 @@
     <string>1</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2026 CodexMeter Contributors</string>
     <key>NSExtension</key>
     <dict>
         <key>NSExtensionPointIdentifier</key>

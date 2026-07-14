@@ -29,6 +29,7 @@ make_fake_app() {
   print -r -- "widget binary" > "$widget_dir/Contents/MacOS/CodexMeterWidget"
   chmod +x "$widget_dir/Contents/MacOS/CodexMeterWidget"
   print -r -- "placeholder icon" > "$app_dir/Contents/Resources/CodexMeter.icns"
+  cp "$ROOT_DIR/LICENSE" "$app_dir/Contents/Resources/LICENSE"
   cat > "$app_dir/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -192,6 +193,139 @@ test_packages_matching_app_version() {
     cd "$output_dir"
     shasum -a 256 -c "${asset:t}.sha256" >/dev/null
   ) || fail "release checksum is invalid"
+  unzip -p "$asset" "CodexMeter.app/Contents/Resources/LICENSE" \
+    | cmp -s "$ROOT_DIR/LICENSE" - \
+    || fail "release archive does not contain the canonical MIT license"
+  if unzip -Z1 "$asset" | grep '^__MACOSX/' >/dev/null; then
+    fail "release archive contains AppleDouble metadata"
+  fi
+}
+
+test_rejects_missing_license() {
+  local case_dir="$TEST_ROOT/missing-license"
+  local app_dir="$case_dir/CodexMeter.app"
+  local output_dir="$case_dir/dist"
+  local bin_dir="$case_dir/bin"
+  local output
+
+  make_fake_app "$app_dir" "0.1.0"
+  make_fake_commands "$bin_dir"
+  rm "$app_dir/Contents/Resources/LICENSE"
+
+  if output="$(
+    CODEXMETER_APP_PATH="$app_dir" \
+    CODEXMETER_OUTPUT_DIR="$output_dir" \
+    PATH="$bin_dir:$PATH" \
+    zsh "$PACKAGE_SCRIPT" v0.1.0 2>&1
+  )"; then
+    fail "packager accepted an app without the project license"
+  fi
+  [[ "$output" == *"Missing bundled license: $app_dir/Contents/Resources/LICENSE"* ]] \
+    || fail "missing license error is unclear: $output"
+}
+
+test_rejects_mismatched_license() {
+  local case_dir="$TEST_ROOT/mismatched-license"
+  local app_dir="$case_dir/CodexMeter.app"
+  local output_dir="$case_dir/dist"
+  local bin_dir="$case_dir/bin"
+  local output
+
+  make_fake_app "$app_dir" "0.1.0"
+  make_fake_commands "$bin_dir"
+  print -r -- "not the project license" > "$app_dir/Contents/Resources/LICENSE"
+
+  if output="$(
+    CODEXMETER_APP_PATH="$app_dir" \
+    CODEXMETER_OUTPUT_DIR="$output_dir" \
+    PATH="$bin_dir:$PATH" \
+    zsh "$PACKAGE_SCRIPT" v0.1.0 2>&1
+  )"; then
+    fail "packager accepted a modified project license"
+  fi
+  [[ "$output" == *"Bundled license does not match the project LICENSE."* ]] \
+    || fail "mismatched license error is unclear: $output"
+}
+
+test_rejects_local_path_in_existing_app() {
+  local case_dir="$TEST_ROOT/private-path"
+  local app_dir="$case_dir/CodexMeter.app"
+  local output_dir="$case_dir/dist"
+  local bin_dir="$case_dir/bin"
+  local output
+
+  make_fake_app "$app_dir" "0.1.0"
+  make_fake_commands "$bin_dir"
+  print -r -- "/Users/example/private/source.swift" >> "$app_dir/Contents/MacOS/CodexMeter"
+
+  if output="$(
+    CODEXMETER_APP_PATH="$app_dir" \
+    CODEXMETER_OUTPUT_DIR="$output_dir" \
+    PATH="$bin_dir:$PATH" \
+    zsh "$PACKAGE_SCRIPT" v0.1.0 2>&1
+  )"; then
+    fail "packager accepted an existing app with a local filesystem path"
+  fi
+  [[ "$output" == *"Privacy check failed for CodexMeter: local filesystem path detected."* ]] \
+    || fail "local path error is unclear: $output"
+}
+
+test_rejects_email_in_existing_widget() {
+  local case_dir="$TEST_ROOT/private-email"
+  local app_dir="$case_dir/CodexMeter.app"
+  local output_dir="$case_dir/dist"
+  local bin_dir="$case_dir/bin"
+  local output
+
+  make_fake_app "$app_dir" "0.1.0"
+  make_fake_commands "$bin_dir"
+  print -r -- "developer@example.com" \
+    >> "$app_dir/Contents/PlugIns/CodexMeterWidget.appex/Contents/MacOS/CodexMeterWidget"
+
+  if output="$(
+    CODEXMETER_APP_PATH="$app_dir" \
+    CODEXMETER_OUTPUT_DIR="$output_dir" \
+    PATH="$bin_dir:$PATH" \
+    zsh "$PACKAGE_SCRIPT" v0.1.0 2>&1
+  )"; then
+    fail "packager accepted an existing widget with an email address"
+  fi
+  [[ "$output" == *"Privacy check failed for CodexMeterWidget: email address detected."* ]] \
+    || fail "email error is unclear: $output"
+}
+
+test_rejects_unapproved_domain_in_existing_app() {
+  local leaked_domains=(
+    "SERVICE.PRIVATE-EXAMPLE.COM"
+    "corp.private-example.xyz"
+    "service.private-example.solutions"
+  )
+  local index=0
+  local leaked_domain case_dir app_dir output_dir bin_dir
+  local output
+
+  for leaked_domain in "${leaked_domains[@]}"; do
+    index=$((index + 1))
+    case_dir="$TEST_ROOT/private-domain-$index"
+    app_dir="$case_dir/CodexMeter.app"
+    output_dir="$case_dir/dist"
+    bin_dir="$case_dir/bin"
+
+    make_fake_app "$app_dir" "0.1.0"
+    make_fake_commands "$bin_dir"
+    print -r -- "$leaked_domain" >> "$app_dir/Contents/MacOS/CodexMeter"
+
+    if output="$(
+      CODEXMETER_APP_PATH="$app_dir" \
+      CODEXMETER_OUTPUT_DIR="$output_dir" \
+      PATH="$bin_dir:$PATH" \
+      zsh "$PACKAGE_SCRIPT" v0.1.0 2>&1
+    )"; then
+      fail "packager accepted an existing app with an unapproved internet domain"
+    fi
+    [[ "$output" == *"Privacy check failed for CodexMeter: unapproved internet domain detected."* ]] \
+      || fail "domain error is unclear: $output"
+  done
 }
 
 test_rejects_version_mismatch() {
@@ -317,6 +451,11 @@ test_rejects_invalid_signed_entitlements() {
 
 test_help
 test_packages_matching_app_version
+test_rejects_missing_license
+test_rejects_mismatched_license
+test_rejects_local_path_in_existing_app
+test_rejects_email_in_existing_widget
+test_rejects_unapproved_domain_in_existing_app
 test_rejects_version_mismatch
 test_rejects_missing_icon
 test_rejects_icon_metadata_mismatch

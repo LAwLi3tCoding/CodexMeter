@@ -27,6 +27,7 @@ swift build -Xswiftc -warnings-as-errors
 zsh Tests/Scripts/AppIconTests.sh
 zsh Tests/Scripts/InstallScriptTests.sh
 zsh Tests/Scripts/PackageReleaseScriptTests.sh
+zsh Tests/Scripts/ReleasePrivacyTests.sh
 zsh Tests/Scripts/PanelLayoutTests.sh
 zsh Tests/Scripts/WidgetBundleTests.sh
 ./scripts/build-app.sh
@@ -68,7 +69,7 @@ Keep pull requests narrow and include:
 - screenshots for visible UI changes when they can be captured without exposing unrelated private information;
 - privacy or compatibility notes for provider/protocol changes.
 
-Do not commit build products, credentials, personal quota data, or generated local state.
+Do not commit build products, credentials, personal quota data, or generated local state. Use synthetic account, plan, percentage, and reset values in pull-request text and screenshots.
 
 ## Release packaging
 
@@ -78,4 +79,4 @@ The app version in `Resources/Info.plist` must match the Git tag. Create the Git
 ./scripts/package-release.sh v0.1.0
 ```
 
-The command builds and verifies the app plus its nested `CodexMeterWidget.appex`, creates the architecture-specific ZIP in `dist/`, and writes the matching SHA-256 file consumed by `scripts/install.sh`. Upload both files to the same GitHub Release without renaming them.
+The command builds and verifies the app plus its nested `CodexMeterWidget.appex`, requires the app bundle to contain an exact copy of the project `LICENSE`, creates an AppleDouble-free architecture-specific ZIP in `dist/`, and writes the matching SHA-256 file consumed by `scripts/install.sh`. Upload both files to the same GitHub Release without renaming them.

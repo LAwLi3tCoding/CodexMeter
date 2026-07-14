@@ -65,7 +65,7 @@ cd CodexMeter
 open build/CodexMeter.app
 ```
 
-The script builds the menu app and native WidgetKit extension, embeds `CodexMeterWidget.appex`, validates both property lists, signs the nested extension first, and applies an ad-hoc local signature to the containing app. Move the app to `/Applications` if desired.
+The script builds the menu app and native WidgetKit extension, embeds `CodexMeterWidget.appex` and the project `LICENSE`, removes release debug metadata that could reveal local build paths, validates both property lists, signs the nested extension first, and applies an ad-hoc local signature to the containing app. Move the app to `/Applications` if desired.
 
 For a debug bundle:
 
@@ -166,8 +166,11 @@ The executable test harness keeps local development compatible with Apple Comman
 - Account identifiers are masked in the UI and are not stored in plaintext notification keys.
 - Notification permission denial never blocks quota display.
 - App Sandbox is intentionally disabled for the containing menu app because it must locate and launch the user-installed Codex executable. The WidgetKit extension is sandboxed and receives only a read-only file exception for CodexMeter's Application Support directory.
+- The release packager rejects app or widget binaries containing local filesystem paths, email addresses, or non-approved internet domains, including when packaging a prebuilt app.
 
 GitHub Release builds are currently ad-hoc signed and checksum-verified, but not signed with an Apple Developer ID or notarized by Apple. macOS may therefore ask for confirmation on first launch. Developer ID signing and notarization are planned for a smoother trust experience. The widget's narrow temporary file exception supports direct GitHub distribution but is not suitable for Mac App Store submission.
+
+Release archives include the canonical MIT license and omit AppleDouble resource-fork metadata. The CodexMeter app icon was created specifically for this project and is distributed under the same MIT License.
 
 ## Current limitations
 
@@ -184,3 +187,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). By contributing, you agree that your cha
 ## License
 
 CodexMeter is available under the [MIT License](LICENSE).
+
+CodexMeter is an independent open-source project. It is not affiliated with, endorsed by, or sponsored by OpenAI. OpenAI and Codex are trademarks of their respective owner.

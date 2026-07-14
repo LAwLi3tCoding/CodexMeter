@@ -3,6 +3,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 APP_DIR="$ROOT_DIR/build/CodexMeter.app"
+APP_INFO="$APP_DIR/Contents/Info.plist"
+BUNDLED_LICENSE="$APP_DIR/Contents/Resources/LICENSE"
 WIDGET_DIR="$APP_DIR/Contents/PlugIns/CodexMeterWidget.appex"
 WIDGET_INFO="$WIDGET_DIR/Contents/Info.plist"
 WIDGET_EXECUTABLE="$WIDGET_DIR/Contents/MacOS/CodexMeterWidget"
@@ -34,6 +36,8 @@ plist_value() {
 "$ROOT_DIR/scripts/build-app.sh" release >/dev/null
 
 [[ -d "$WIDGET_DIR" ]] || fail "app bundle does not contain CodexMeterWidget.appex"
+[[ -f "$BUNDLED_LICENSE" ]] || fail "app bundle does not contain LICENSE"
+cmp -s "$ROOT_DIR/LICENSE" "$BUNDLED_LICENSE" || fail "bundled LICENSE differs from the project LICENSE"
 [[ -f "$WIDGET_INFO" ]] || fail "widget bundle does not contain Info.plist"
 [[ -x "$WIDGET_EXECUTABLE" ]] || fail "widget bundle does not contain an executable CodexMeterWidget"
 
@@ -51,6 +55,10 @@ plist_value() {
   || fail "widget minimum macOS version is not 13.0"
 [[ "$(plist_value "$WIDGET_INFO" NSExtension.NSExtensionPointIdentifier)" == "com.apple.widgetkit-extension" ]] \
   || fail "widget extension point is invalid"
+[[ "$(plist_value "$APP_INFO" NSHumanReadableCopyright)" == "Copyright © 2026 CodexMeter Contributors" ]] \
+  || fail "app copyright metadata is missing"
+[[ "$(plist_value "$WIDGET_INFO" NSHumanReadableCopyright)" == "Copyright © 2026 CodexMeter Contributors" ]] \
+  || fail "widget copyright metadata is missing"
 
 if plist_value "$APP_ENTITLEMENTS" 'com\.apple\.security\.app-sandbox' >/dev/null; then
   fail "app entitlement must not enable the app sandbox"

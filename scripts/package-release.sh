@@ -40,9 +40,44 @@ fi
 readonly INFO_PLIST="$APP_DIR/Contents/Info.plist"
 readonly EXECUTABLE="$APP_DIR/Contents/MacOS/CodexMeter"
 readonly ICON_PATH="$APP_DIR/Contents/Resources/CodexMeter.icns"
+readonly BUNDLED_LICENSE="$APP_DIR/Contents/Resources/LICENSE"
 readonly WIDGET_DIR="$APP_DIR/Contents/PlugIns/CodexMeterWidget.appex"
 readonly WIDGET_INFO_PLIST="$WIDGET_DIR/Contents/Info.plist"
 readonly WIDGET_EXECUTABLE="$WIDGET_DIR/Contents/MacOS/CodexMeterWidget"
+
+assert_release_binary_private() {
+  local binary="$1"
+  local label="$2"
+  local printable_strings
+  local public_domain_pattern
+
+  public_domain_pattern='([a-z0-9-]+\.)+([a-z]{2}|com|net|org|edu|gov|int|mil|info|biz|name|pro|mobi|travel|jobs|museum|aero|asia|cat|tel|dev|app|cloud|tech|xyz|solutions|company|technology|software|systems|digital|online|site|store|agency|tools|services|engineering|consulting|business|work)[[:>:]]'
+
+  if ! printable_strings="$(strings -a - < "$binary")"; then
+    echo "Privacy check failed for $label: unable to inspect executable strings." >&2
+    return 1
+  fi
+
+  if print -r -- "$printable_strings" \
+    | LC_ALL=C grep -E '/Users/|/home/|/var/folders/' >/dev/null; then
+    echo "Privacy check failed for $label: local filesystem path detected." >&2
+    return 1
+  fi
+
+  if print -r -- "$printable_strings" \
+    | LC_ALL=C grep -E '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' >/dev/null; then
+    echo "Privacy check failed for $label: email address detected." >&2
+    return 1
+  fi
+
+  if print -r -- "$printable_strings" \
+    | LC_ALL=C grep -Eio "$public_domain_pattern" \
+    | tr '[:upper:]' '[:lower:]' \
+    | grep -Ev '^com\.(apple|codexmeter)(\.|$)|(^|\.)(apple\.com|openai\.com|github\.com)$' >/dev/null; then
+    echo "Privacy check failed for $label: unapproved internet domain detected." >&2
+    return 1
+  fi
+}
 
 if [[ ! -d "$APP_DIR" || ! -f "$INFO_PLIST" || ! -x "$EXECUTABLE" ]]; then
   echo "Invalid CodexMeter app bundle: $APP_DIR" >&2
@@ -54,10 +89,23 @@ if [[ ! -f "$ICON_PATH" ]]; then
   exit 1
 fi
 
+if [[ ! -f "$BUNDLED_LICENSE" ]]; then
+  echo "Missing bundled license: $BUNDLED_LICENSE" >&2
+  exit 1
+fi
+
+if ! cmp -s "$ROOT_DIR/LICENSE" "$BUNDLED_LICENSE"; then
+  echo "Bundled license does not match the project LICENSE." >&2
+  exit 1
+fi
+
 if [[ ! -d "$WIDGET_DIR" || ! -f "$WIDGET_INFO_PLIST" || ! -x "$WIDGET_EXECUTABLE" ]]; then
   echo "Invalid CodexMeter widget bundle: $WIDGET_DIR" >&2
   exit 1
 fi
+
+assert_release_binary_private "$EXECUTABLE" "CodexMeter" || exit 1
+assert_release_binary_private "$WIDGET_EXECUTABLE" "CodexMeterWidget" || exit 1
 
 WIDGET_BUNDLE_ID="$(plutil -extract CFBundleIdentifier raw -o - "$WIDGET_INFO_PLIST" 2>/dev/null || true)"
 if [[ "$WIDGET_BUNDLE_ID" != "com.codexmeter.CodexMeter.Widget" ]]; then
@@ -155,7 +203,7 @@ readonly ASSET_PATH="$OUTPUT_DIR/$ASSET_NAME"
 readonly CHECKSUM_PATH="$ASSET_PATH.sha256"
 
 rm -f "$ASSET_PATH" "$CHECKSUM_PATH"
-ditto -c -k --sequesterRsrc --keepParent "$APP_DIR" "$ASSET_PATH"
+ditto -c -k --norsrc --keepParent "$APP_DIR" "$ASSET_PATH"
 (
   cd "$OUTPUT_DIR"
   shasum -a 256 "$ASSET_NAME" > "$ASSET_NAME.sha256"

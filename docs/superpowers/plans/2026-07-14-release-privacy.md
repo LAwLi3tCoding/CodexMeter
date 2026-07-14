@@ -32,7 +32,7 @@
 
 - [ ] **Step 1: Add the failing real-artifact test**
 
-The script builds and packages `v0.1.0`, then checks:
+The script builds and packages `v0.1.0`, discovers the architecture-specific archive, then checks:
 
 ```zsh
 cmp "$ROOT_DIR/LICENSE" "$APP_DIR/Contents/Resources/LICENSE"
@@ -42,10 +42,11 @@ unzip -Z1 "$ZIP" | grep '^__MACOSX/'
 ```
 
 The path and AppleDouble checks invert the result and fail on any match. Apply the same executable scan to the widget.
+Extract the archive and verify its app and widget signatures independently.
 
 - [ ] **Step 2: Add package fixture tests**
 
-Copy root `LICENSE` into successful fake apps. Add cases that remove or alter the bundled license and expect `package-release.sh` to reject them. Assert the successful archive contains the license and no `__MACOSX` entry.
+Copy root `LICENSE` into successful fake apps. Add cases that remove or alter the bundled license and expect `package-release.sh` to reject them. Add externally supplied app fixtures containing a synthetic local path, email address, and unapproved domain, and require the packager to reject each one. Assert the successful archive contains the license and no `__MACOSX` entry.
 
 - [ ] **Step 3: Run RED verification**
 
@@ -136,11 +137,15 @@ cmp -s "$ROOT_DIR/LICENSE" "$APP_DIR/Contents/Resources/LICENSE"
 
 Replace `--sequesterRsrc` with `--norsrc` in the release `ditto` command.
 
-- [ ] **Step 3: Document rights and verification**
+- [ ] **Step 3: Enforce privacy for every packaging entry point**
+
+Before signature verification and archive creation, scan both executables and reject local filesystem paths, email addresses, and common public-domain patterns outside the explicit project/vendor allowlist. Match domains case-insensitively and include all two-letter country-code suffixes plus the common generic suffixes covered by fixture tests. Apply this gate even when `CODEXMETER_APP_PATH` supplies a prebuilt app.
+
+- [ ] **Step 4: Document rights and verification**
 
 README states that the icon was created for CodexMeter, is distributed under MIT, and that the project is not affiliated with OpenAI. CONTRIBUTING adds the release privacy test to the required command list and prohibits real verification values in PR descriptions.
 
-- [ ] **Step 4: Run package GREEN verification**
+- [ ] **Step 5: Run package GREEN verification**
 
 Run:
 

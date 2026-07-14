@@ -39,11 +39,13 @@ Publish a new repository with a squashed clean history. This creates the smalles
 - install the root `LICENSE` at `Contents/Resources/LICENSE`;
 - sign the widget and containing app only after all mutations are complete.
 
-`scripts/package-release.sh` will package without resource forks or AppleDouble metadata. The release test contract will reject:
+`scripts/package-release.sh` will enforce the same privacy policy for both freshly built and externally supplied app bundles, then package without resource forks or AppleDouble metadata. The release contract will reject:
 
 - a missing or modified bundled MIT license;
-- `/Users/`, `/home/`, `/var/folders/`, personal email, or corporate-domain strings in either executable;
+- `/Users/`, `/home/`, `/var/folders/`, personal email, or common public-domain patterns outside the explicit Apple/OpenAI/GitHub allowlist in either executable;
 - `__MACOSX` and AppleDouble entries in the ZIP.
+
+The real-artifact test discovers the architecture-specific archive dynamically, extracts it, and verifies the final app and widget signatures rather than relying only on the pre-archive build directory.
 
 ## Repository metadata design
 
