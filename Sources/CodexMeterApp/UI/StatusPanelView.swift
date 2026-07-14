@@ -5,54 +5,71 @@ import SwiftUI
 struct StatusPanelView: View {
     @ObservedObject var store: QuotaStore
 
+    private let quotaColumns = [
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible())
+    ]
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        let presentation = panelPresentation
+
+        VStack(spacing: 10) {
             PanelHeaderView(
-                presentation: store.snapshot.map {
-                    StatusPanelPresentation(snapshot: $0)
-                }
+                presentation: presentation,
+                staleFailure: store.snapshot == nil ? nil : store.failure
             )
+            .padding(14)
+            .background {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(nsColor: .controlBackgroundColor))
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+            }
 
-            statusContent
+            statusContent(presentation: presentation)
 
-            PanelFooterView(
-                store: store,
-                updatedText: store.snapshot.map {
-                    StatusPanelPresentation(snapshot: $0).updatedText
+            PanelFooterView(store: store)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 9)
+                .background {
+                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .fill(Color(nsColor: .controlBackgroundColor))
                 }
-            )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 13, style: .continuous)
+                        .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+                }
         }
-        .padding(16)
-        .frame(width: 360)
+        .padding(10)
+        .frame(width: 464)
+        .background(Color(nsColor: .windowBackgroundColor))
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var panelPresentation: StatusPanelPresentation? {
+        store.snapshot.map { StatusPanelPresentation(snapshot: $0) }
     }
 
     @ViewBuilder
-    private var statusContent: some View {
-        if let snapshot = store.snapshot {
-            if let failure = store.failure {
-                StaleDataBanner(failure: failure)
-            }
-
-            if snapshot.quotas.isEmpty {
+    private func statusContent(
+        presentation: StatusPanelPresentation?
+    ) -> some View {
+        if let presentation {
+            if presentation.quotaCards.isEmpty {
                 StatusMessageView(
                     symbol: "gauge.with.dots.needle.0percent",
                     title: "暂无额度数据",
                     message: "Codex CLI 没有返回可展示的额度窗口。"
                 )
-            } else {
+            } else if presentation.requiresQuotaOverflow {
                 ScrollView {
-                    LazyVStack(spacing: 10) {
-                        ForEach(
-                            snapshot.quotas.map {
-                                QuotaCardPresentation(quota: $0)
-                            },
-                            id: \.id
-                        ) { presentation in
-                            QuotaCardView(presentation: presentation)
-                        }
-                    }
+                    quotaGrid(presentation: presentation)
                 }
                 .frame(maxHeight: 410)
+            } else {
+                quotaGrid(presentation: presentation)
             }
         } else if store.isRefreshing {
             StatusMessageView(
@@ -76,6 +93,20 @@ struct StatusPanelView: View {
             )
         }
     }
+
+    private func quotaGrid(
+        presentation: StatusPanelPresentation
+    ) -> some View {
+        LazyVGrid(
+            columns: quotaColumns,
+            alignment: .leading,
+            spacing: 10
+        ) {
+            ForEach(presentation.quotaCards, id: \.id) { card in
+                QuotaCardView(presentation: card)
+            }
+        }
+    }
 }
 
 private struct StatusMessageView: View {
@@ -91,44 +122,36 @@ private struct StatusMessageView: View {
     var role: Role = .neutral
 
     var body: some View {
-        VStack(spacing: 9) {
+        VStack(spacing: 10) {
             if showsProgress {
                 ProgressView()
                     .controlSize(.small)
             } else {
                 Image(systemName: symbol)
                     .font(.system(size: 26, weight: .medium))
+                    .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(role == .error ? Color.orange : Color.secondary)
             }
 
-            Text(title)
-                .font(.headline)
-            Text(message)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
-        .frame(maxWidth: .infinity, minHeight: 126)
-        .padding(.horizontal, 18)
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 12))
-    }
-}
-
-private struct StaleDataBanner: View {
-    let failure: QuotaStoreFailure
-
-    var body: some View {
-        Label {
-            Text("显示上次数据 · \(failure.localizedDescription)")
-                .lineLimit(2)
-        } icon: {
-            Image(systemName: "exclamationmark.arrow.triangle.2.circlepath")
+        .frame(maxWidth: .infinity, minHeight: 132)
+        .padding(.horizontal, 20)
+        .background {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(nsColor: .controlBackgroundColor))
         }
-        .font(.caption)
-        .foregroundStyle(.orange)
-        .padding(10)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 9))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+        }
     }
 }

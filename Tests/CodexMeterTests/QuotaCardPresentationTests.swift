@@ -9,8 +9,33 @@ let quotaCardPresentation: [HarnessTest] = [
     ),
     HarnessTest(
         suite: "ui-presentation",
-        name: "Quota card assigns semantic levels",
-        body: testQuotaCardLevels
+        name: "Quota card keeps exact levels while displaying conservative integers",
+        body: testQuotaCardLevelsAndDisplayedPercentages
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Rounded used and remaining values total one hundred",
+        body: testQuotaCardRoundedTotal
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Empty quota gauge exposes ten empty segments",
+        body: testQuotaGaugeAtZero
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Quota gauge exposes a partially filled segment",
+        body: testQuotaGaugePartialSegment
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Quota gauge preserves an exact segment boundary",
+        body: testQuotaGaugeBoundary
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Full quota gauge exposes ten filled segments",
+        body: testQuotaGaugeAtOneHundred
     ),
     HarnessTest(
         suite: "ui-presentation",
@@ -21,6 +46,31 @@ let quotaCardPresentation: [HarnessTest] = [
         suite: "ui-presentation",
         name: "Panel header identifies API key accounts",
         body: testAPIKeyAccountFormatting
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Panel header labels the Pro twenty-times tier",
+        body: testProTwentyTimesPlanFormatting
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Non-Codex providers keep their own Pro label",
+        body: testNonCodexProPlanFormatting
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Panel keeps and sorts every quota card",
+        body: testPanelQuotaCardOrdering
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Panel keeps two through four quota cards unscrolled",
+        body: testPanelCommonQuotaCountsDoNotRequireOverflow
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
+        name: "Panel requires overflow beyond four quota cards",
+        body: testPanelLargeQuotaCountRequiresOverflow
     )
 ]
 
@@ -39,25 +89,79 @@ private func testQuotaCardFormatting() {
     expectEqual(presentation.title, "5 小时额度")
     expectEqual(presentation.percentageText, "78%")
     expectEqual(presentation.remainingText, "剩余 78%")
+    expectEqual(presentation.usedText, "已用 22%")
     expectEqual(presentation.countdownText, "3h42m")
     expectEqual(presentation.resetText, "重置 03:42")
     expectEqual(presentation.progress, 0.78)
     expectEqual(
         presentation.accessibilityLabel,
-        "5 小时额度，模型 gpt-5.5，剩余 78%，距重置 3h42m，重置 03:42"
+        "5 小时额度，模型 gpt-5.5，剩余 78%，已用 22%，距重置 3h42m，重置 03:42"
     )
 }
 
-private func testQuotaCardLevels() {
-    let healthy = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 20))
-    let warning = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 55))
-    let low = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 75))
-    let critical = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 92))
+private func testQuotaCardLevelsAndDisplayedPercentages() {
+    let healthy = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 50))
+    let warningBelowFifty = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 50.1))
+    let warningAtTwenty = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 80))
+    let criticalBelowTwenty = QuotaCardPresentation(quota: makePresentationQuota(usedPercent: 80.1))
 
     expectEqual(healthy.level, .healthy)
-    expectEqual(warning.level, .warning)
-    expectEqual(low.level, .low)
-    expectEqual(critical.level, .critical)
+    expectEqual(healthy.percentageText, "50%")
+    expectEqual(warningBelowFifty.level, .warning)
+    expectEqual(warningBelowFifty.percentageText, "49%")
+    expectEqual(warningAtTwenty.level, .warning)
+    expectEqual(warningAtTwenty.percentageText, "20%")
+    expectEqual(criticalBelowTwenty.level, .critical)
+    expectEqual(criticalBelowTwenty.percentageText, "19%")
+}
+
+private func testQuotaCardRoundedTotal() {
+    let presentation = QuotaCardPresentation(
+        quota: makePresentationQuota(usedPercent: 33.5)
+    )
+
+    expectEqual(presentation.usedText, "已用 34%")
+    expectEqual(presentation.remainingText, "剩余 66%")
+}
+
+private func testQuotaGaugeAtZero() {
+    let presentation = QuotaCardPresentation(
+        quota: makePresentationQuota(usedPercent: 100)
+    )
+
+    expectEqual(presentation.segmentFillAmounts.count, 10)
+    expectEqual(presentation.segmentFillAmounts, Array(repeating: 0, count: 10))
+}
+
+private func testQuotaGaugePartialSegment() {
+    let presentation = QuotaCardPresentation(
+        quota: makePresentationQuota(usedPercent: 35)
+    )
+
+    expectEqual(
+        presentation.segmentFillAmounts,
+        [1, 1, 1, 1, 1, 1, 0.5, 0, 0, 0]
+    )
+}
+
+private func testQuotaGaugeBoundary() {
+    let presentation = QuotaCardPresentation(
+        quota: makePresentationQuota(usedPercent: 80)
+    )
+
+    expectEqual(
+        presentation.segmentFillAmounts,
+        [1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+    )
+}
+
+private func testQuotaGaugeAtOneHundred() {
+    let presentation = QuotaCardPresentation(
+        quota: makePresentationQuota(usedPercent: 0)
+    )
+
+    expectEqual(presentation.segmentFillAmounts.count, 10)
+    expectEqual(presentation.segmentFillAmounts, Array(repeating: 1, count: 10))
 }
 
 private func testPanelHeaderFormatting() {
@@ -98,20 +202,146 @@ private func testAPIKeyAccountFormatting() {
     expectEqual(presentation.accountText, "API key account")
 }
 
-private func makePresentationQuota(
-    usedPercent: Double,
-    resetTime: Date? = nil
-) -> QuotaStatus {
-    QuotaStatus(
-        id: "codex.primary",
+private func testProTwentyTimesPlanFormatting() {
+    let quota = makePresentationQuota(usedPercent: 20)
+    let snapshot = ProviderSnapshot(
+        provider: .codex,
+        account: nil,
+        accountKind: .chatGPT,
+        plan: "pro",
+        model: "Codex",
+        quotas: [quota],
+        updatedAt: quota.updatedAt
+    )
+
+    let presentation = StatusPanelPresentation(snapshot: snapshot)
+
+    expectEqual(presentation.planText, "PRO 20X")
+}
+
+private func testNonCodexProPlanFormatting() {
+    let quota = makePresentationQuota(usedPercent: 20)
+    let snapshot = ProviderSnapshot(
+        provider: .openAI,
+        account: nil,
+        accountKind: .unknown,
+        plan: "pro",
+        model: "OpenAI",
+        quotas: [quota],
+        updatedAt: quota.updatedAt
+    )
+
+    let presentation = StatusPanelPresentation(snapshot: snapshot)
+
+    expectEqual(presentation.planText, "PRO")
+}
+
+private func testPanelQuotaCardOrdering() {
+    let quotas = [
+        makePresentationQuota(
+            id: "codex.secondary",
+            limitID: "codex",
+            label: "周额度",
+            usedPercent: 40,
+            windowDurationMinutes: 10_080
+        ),
+        makePresentationQuota(
+            id: "unknown.primary",
+            limitID: "unknown",
+            label: "额度",
+            usedPercent: 10,
+            windowDurationMinutes: nil
+        ),
+        makePresentationQuota(
+            id: "codex_spark.primary",
+            limitID: "codex_spark",
+            label: "5 小时额度",
+            usedPercent: 5,
+            windowDurationMinutes: 300
+        ),
+        makePresentationQuota(
+            id: "codex.primary",
+            limitID: "codex",
+            label: "5 小时额度",
+            usedPercent: 20,
+            windowDurationMinutes: 300
+        )
+    ]
+    let snapshot = ProviderSnapshot(
         provider: .codex,
         account: "developer@example.com",
+        plan: "pro",
         model: "gpt-5.5",
-        limitID: "codex",
-        label: "5 小时额度",
+        quotas: quotas,
+        updatedAt: Date(timeIntervalSince1970: 500)
+    )
+
+    let presentation = StatusPanelPresentation(snapshot: snapshot)
+
+    expectEqual(
+        presentation.quotaCards.map(\.id),
+        [
+            "codex.primary",
+            "codex_spark.primary",
+            "codex.secondary",
+            "unknown.primary"
+        ]
+    )
+}
+
+private func testPanelCommonQuotaCountsDoNotRequireOverflow() {
+    for count in 2...4 {
+        let presentation = makePanelPresentation(quotaCount: count)
+
+        expectEqual(presentation.requiresQuotaOverflow, false)
+    }
+}
+
+private func testPanelLargeQuotaCountRequiresOverflow() {
+    let presentation = makePanelPresentation(quotaCount: 5)
+
+    expectEqual(presentation.requiresQuotaOverflow, true)
+}
+
+private func makePanelPresentation(quotaCount: Int) -> StatusPanelPresentation {
+    let quotas = (0..<quotaCount).map { index in
+        makePresentationQuota(
+            id: "codex.\(index)",
+            limitID: "codex.\(index)",
+            usedPercent: Double(index)
+        )
+    }
+    let snapshot = ProviderSnapshot(
+        provider: .codex,
+        account: "developer@example.com",
+        plan: "pro",
+        model: "gpt-5.5",
+        quotas: quotas,
+        updatedAt: Date(timeIntervalSince1970: 500)
+    )
+
+    return StatusPanelPresentation(snapshot: snapshot)
+}
+
+private func makePresentationQuota(
+    id: String = "codex.primary",
+    limitID: String = "codex",
+    label: String = "5 小时额度",
+    model: String = "gpt-5.5",
+    usedPercent: Double,
+    resetTime: Date? = nil,
+    windowDurationMinutes: Int? = 300
+) -> QuotaStatus {
+    QuotaStatus(
+        id: id,
+        provider: .codex,
+        account: "developer@example.com",
+        model: model,
+        limitID: limitID,
+        label: label,
         usedPercent: usedPercent,
         resetTime: resetTime,
-        windowDurationMinutes: 300,
+        windowDurationMinutes: windowDurationMinutes,
         updatedAt: Date(timeIntervalSince1970: 500)
     )
 }

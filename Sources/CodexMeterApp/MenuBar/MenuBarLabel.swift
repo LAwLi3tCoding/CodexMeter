@@ -5,9 +5,14 @@ struct MenuBarLabel: View {
     let presentation: MenuBarPresentation
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(alignment: .center, spacing: 5) {
             Image(systemName: presentation.systemImageName)
-            Text(presentation.labelText)
+                .symbolRenderingMode(.hierarchical)
+                .frame(width: 14, height: 14, alignment: .center)
+
+            Text(presentation.displayText)
+                .fontWeight(.semibold)
+                .monospacedDigit()
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(presentation.accessibilityLabel)

@@ -29,11 +29,19 @@ struct CodexMeterApp: App {
 
     @MainActor
     private static func makeStore() -> QuotaStore {
+        let widgetPublisher = AppWidgetSnapshotPublisher()
+
         do {
             let client = try CodexAppServerClient()
-            return QuotaStore(provider: CodexProvider(client: client))
+            return QuotaStore(
+                provider: CodexProvider(client: client),
+                widgetPublisher: widgetPublisher
+            )
         } catch {
-            return QuotaStore(provider: MissingCodexProvider())
+            return QuotaStore(
+                provider: MissingCodexProvider(),
+                widgetPublisher: widgetPublisher
+            )
         }
     }
 }

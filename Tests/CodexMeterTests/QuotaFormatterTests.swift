@@ -60,8 +60,15 @@ private func testMissingWindowDurationLabel() async throws {
 private func testResetCountdown() async throws {
     let now = Date(timeIntervalSince1970: 1_730_900_000)
     let reset = now.addingTimeInterval((3 * 60 * 60) + (45 * 60))
+    let threeDays: TimeInterval = 3 * 86_400
+    let twoHours: TimeInterval = 2 * 3_600
+    let fiveMinutes: TimeInterval = 5 * 60
+    let multiDayReset = now.addingTimeInterval(threeDays + twoHours + fiveMinutes)
 
     expectEqual(QuotaFormatter.countdown(until: reset, now: now), "3h45m")
+    expectEqual(QuotaFormatter.countdown(until: multiDayReset, now: now), "3d2h5m")
+    expectEqual(QuotaFormatter.countdown(until: now.addingTimeInterval(30), now: now), "1m")
+    expectEqual(QuotaFormatter.countdown(until: now.addingTimeInterval(0.5), now: now), "1m")
     expectEqual(QuotaFormatter.countdown(until: now, now: now), "即将重置")
     expectEqual(QuotaFormatter.countdown(until: nil, now: now), "—")
 }

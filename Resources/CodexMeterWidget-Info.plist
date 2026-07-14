@@ -7,32 +7,27 @@
     <key>CFBundleDisplayName</key>
     <string>CodexMeter</string>
     <key>CFBundleExecutable</key>
-    <string>CodexMeter</string>
+    <string>CodexMeterWidget</string>
     <key>CFBundleIdentifier</key>
-    <string>com.codexmeter.CodexMeter</string>
-    <key>CFBundleIconFile</key>
-    <string>CodexMeter</string>
+    <string>com.codexmeter.CodexMeter.Widget</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>CodexMeter</string>
+    <string>CodexMeterWidget</string>
     <key>CFBundlePackageType</key>
-    <string>APPL</string>
+    <string>XPC!</string>
     <key>CFBundleShortVersionString</key>
     <string>0.1.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
-    <key>LSApplicationCategoryType</key>
-    <string>public.app-category.developer-tools</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
-    <key>LSUIElement</key>
-    <true/>
-    <key>NSHighResolutionCapable</key>
-    <true/>
     <key>NSHumanReadableCopyright</key>
     <string>Copyright © 2026 CodexMeter Contributors</string>
-    <key>NSSupportsAutomaticGraphicsSwitching</key>
-    <true/>
+    <key>NSExtension</key>
+    <dict>
+        <key>NSExtensionPointIdentifier</key>
+        <string>com.apple.widgetkit-extension</string>
+    </dict>
 </dict>
 </plist>
