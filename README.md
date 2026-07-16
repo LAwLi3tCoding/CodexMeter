@@ -6,6 +6,10 @@
 
 CodexMeter is a native macOS menu bar app that shows the remaining quota reported by the locally installed OpenAI Codex CLI. It uses Swift, SwiftUI, and `MenuBarExtra`, stays out of the Dock, and refreshes without asking users to paste a token.
 
+<p align="center">
+  <img src="docs/assets/codexmeter-detail-panel.png" width="464" alt="CodexMeter detail panel showing five-hour and weekly Codex quota windows">
+</p>
+
 ## Features
 
 - Compact, always-visible menu bar remaining percentage such as `Codex 64%`.
@@ -43,7 +47,7 @@ To install a specific release or choose the destination:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/LAwLi3tCoding/CodexMeter/main/scripts/install.sh \
-  | CODEXMETER_VERSION=v0.1.0 CODEXMETER_INSTALL_DIR="$HOME/Applications" zsh
+  | CODEXMETER_VERSION=v0.3.0 CODEXMETER_INSTALL_DIR="$HOME/Applications" zsh
 ```
 
 Then launch CodexMeter:
@@ -54,7 +58,7 @@ open /Applications/CodexMeter.app
 
 Launch the containing app once so macOS can discover its widget extension. On macOS 14 or later, Control-click the desktop, choose **Edit Widgets**, search for **CodexMeter**, then add the small or medium widget. The same widget can be added to Notification Center on macOS 13 or later.
 
-Version 0.1.0 provides an Apple Silicon (`arm64`) binary. Intel Macs can build a native binary from source.
+Version 0.3.0 provides an Apple Silicon (`arm64`) binary. Intel Macs can build a native binary from source.
 
 ## Build from source
 
@@ -176,7 +180,7 @@ Release archives include the canonical MIT license and omit AppleDouble resource
 
 - ChatGPT Codex rate limits are displayed only when the installed CLI exposes them.
 - API-key accounts are identified, but OpenAI API billing and organization limits are not implemented.
-- Usage history and charts are planned extension points, not part of version 0.1.0.
+- Usage history and charts are planned extension points, not part of version 0.3.0.
 - Notifications require launching the assembled `.app` bundle so macOS has a bundle identity.
 - Widget updates are scheduled by macOS and cannot guarantee the menu app's one-minute refresh interval.
 

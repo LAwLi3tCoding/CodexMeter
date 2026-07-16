@@ -8,7 +8,7 @@ usage() {
 Create CodexMeter GitHub Release assets.
 
 Usage:
-  ./scripts/package-release.sh v0.1.0
+  ./scripts/package-release.sh v0.3.0
 
 Environment variables:
   CODEXMETER_APP_PATH     Package an existing CodexMeter.app instead of building it
