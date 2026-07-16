@@ -86,16 +86,16 @@ private func testQuotaCardFormatting() {
         timeZone: TimeZone(secondsFromGMT: 0)!
     )
 
-    expectEqual(presentation.title, "5 小时额度")
+    expectEqual(presentation.title, "5-hour quota")
     expectEqual(presentation.percentageText, "78%")
-    expectEqual(presentation.remainingText, "剩余 78%")
-    expectEqual(presentation.usedText, "已用 22%")
+    expectEqual(presentation.remainingText, "78% remaining")
+    expectEqual(presentation.usedText, "22% used")
     expectEqual(presentation.countdownText, "3h42m")
-    expectEqual(presentation.resetText, "重置 03:42")
+    expectEqual(presentation.resetText, "Resets at 03:42")
     expectEqual(presentation.progress, 0.78)
     expectEqual(
         presentation.accessibilityLabel,
-        "5 小时额度，模型 gpt-5.5，剩余 78%，已用 22%，距重置 3h42m，重置 03:42"
+        "5-hour quota, model gpt-5.5, 78% remaining, 22% used, resets in 3h42m, resets at 03:42"
     )
 }
 
@@ -120,8 +120,8 @@ private func testQuotaCardRoundedTotal() {
         quota: makePresentationQuota(usedPercent: 33.5)
     )
 
-    expectEqual(presentation.usedText, "已用 34%")
-    expectEqual(presentation.remainingText, "剩余 66%")
+    expectEqual(presentation.usedText, "34% used")
+    expectEqual(presentation.remainingText, "66% remaining")
 }
 
 private func testQuotaGaugeAtZero() {
@@ -182,7 +182,7 @@ private func testPanelHeaderFormatting() {
     expectEqual(presentation.accountText, "dev***@example.com")
     expectEqual(presentation.planText, "PLUS")
     expectEqual(presentation.modelText, "gpt-5.5")
-    expectEqual(presentation.updatedText, "更新于 00:08")
+    expectEqual(presentation.updatedText, "Updated at 00:08")
 }
 
 private func testAPIKeyAccountFormatting() {
@@ -241,28 +241,28 @@ private func testPanelQuotaCardOrdering() {
         makePresentationQuota(
             id: "codex.secondary",
             limitID: "codex",
-            label: "周额度",
+            label: "Weekly quota",
             usedPercent: 40,
             windowDurationMinutes: 10_080
         ),
         makePresentationQuota(
             id: "unknown.primary",
             limitID: "unknown",
-            label: "额度",
+            label: "Quota",
             usedPercent: 10,
             windowDurationMinutes: nil
         ),
         makePresentationQuota(
             id: "codex_spark.primary",
             limitID: "codex_spark",
-            label: "5 小时额度",
+            label: "5-hour quota",
             usedPercent: 5,
             windowDurationMinutes: 300
         ),
         makePresentationQuota(
             id: "codex.primary",
             limitID: "codex",
-            label: "5 小时额度",
+            label: "5-hour quota",
             usedPercent: 20,
             windowDurationMinutes: 300
         )
@@ -326,7 +326,7 @@ private func makePanelPresentation(quotaCount: Int) -> StatusPanelPresentation {
 private func makePresentationQuota(
     id: String = "codex.primary",
     limitID: String = "codex",
-    label: String = "5 小时额度",
+    label: String = "5-hour quota",
     model: String = "gpt-5.5",
     usedPercent: Double,
     resetTime: Date? = nil,

@@ -39,7 +39,7 @@ struct PanelHeaderView: View {
             HStack(alignment: .top, spacing: 8) {
                 MetadataItem(
                     label: "ACCOUNT",
-                    value: presentation?.accountText ?? "Codex 账号"
+                    value: presentation?.accountText ?? "Codex account"
                 )
                 MetadataItem(
                     label: "MODEL",
@@ -47,7 +47,7 @@ struct PanelHeaderView: View {
                 )
                 MetadataItem(
                     label: "UPDATED",
-                    value: presentation?.updatedText ?? "尚未更新"
+                    value: presentation?.updatedText ?? "Not updated"
                 )
             }
             .padding(10)
@@ -55,14 +55,14 @@ struct PanelHeaderView: View {
 
             if let staleFailure {
                 Label {
-                    Text("显示上次数据 · \(staleFailure.localizedDescription)")
+                    Text("Showing last update · \(staleFailure.localizedDescription)")
                         .lineLimit(2)
                 } icon: {
                     Image(systemName: "exclamationmark.arrow.triangle.2.circlepath")
                 }
                 .font(.caption)
                 .foregroundStyle(.orange)
-                .accessibilityLabel("额度数据可能已过期，\(staleFailure.localizedDescription)")
+                .accessibilityLabel("Quota data may be stale. \(staleFailure.localizedDescription)")
             }
         }
         .accessibilityElement(children: .contain)

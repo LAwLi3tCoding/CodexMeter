@@ -8,6 +8,9 @@ MENU_BAR_FILE="$ROOT_DIR/Sources/CodexMeterApp/MenuBar/MenuBarLabel.swift"
 QUOTA_CARD_FILE="$ROOT_DIR/Sources/CodexMeterApp/UI/QuotaCardView.swift"
 PANEL_HEADER_FILE="$ROOT_DIR/Sources/CodexMeterApp/UI/PanelHeaderView.swift"
 PANEL_FOOTER_FILE="$ROOT_DIR/Sources/CodexMeterApp/UI/PanelFooterView.swift"
+QUOTA_FORMATTER_FILE="$ROOT_DIR/Sources/CodexMeterCore/Support/QuotaFormatter.swift"
+QUOTA_PRESENTATION_FILE="$ROOT_DIR/Sources/CodexMeterCore/Models/QuotaCardPresentation.swift"
+QUOTA_STORE_FILE="$ROOT_DIR/Sources/CodexMeterCore/State/QuotaStore.swift"
 
 fail() {
   echo "FAIL [panel-layout] $1" >&2
@@ -48,7 +51,20 @@ if grep -Eq '\.font\(\.system\(size: 9|\.foregroundStyle\(\.tertiary\)' "$PANEL_
 fi
 [[ "$(grep -Fc '.font(.caption2.weight(.semibold))' "$PANEL_HEADER_FILE")" -ge 2 ]] \
   || fail "metadata labels must use caption2 semibold typography"
-grep -Fq 'Text("后台自动更新")' "$PANEL_FOOTER_FILE" \
+grep -Fq 'Text("Background updates")' "$PANEL_FOOTER_FILE" \
   || fail "auto-refresh detail must not promise a fixed cadence"
+
+PANEL_ENGLISH_FILES=(
+  "$PANEL_FILE"
+  "$QUOTA_CARD_FILE"
+  "$PANEL_HEADER_FILE"
+  "$PANEL_FOOTER_FILE"
+  "$QUOTA_FORMATTER_FILE"
+  "$QUOTA_PRESENTATION_FILE"
+  "$QUOTA_STORE_FILE"
+)
+if grep -Eq '[一-龥，。]' "${PANEL_ENGLISH_FILES[@]}"; then
+  fail "status panel strings must be English-only"
+fi
 
 echo "PASS [panel-layout] common quotas use the grid and large collections have bounded overflow"

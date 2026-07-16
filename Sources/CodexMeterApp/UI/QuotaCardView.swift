@@ -38,7 +38,7 @@ struct QuotaCardView: View {
                     .monospacedDigit()
                     .foregroundStyle(accentColor)
 
-                Text("剩余")
+                Text("remaining")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -110,11 +110,11 @@ struct QuotaCardView: View {
     private var statusDescription: String {
         switch presentation.level {
         case .healthy:
-            return "额度充足"
+            return "Healthy quota"
         case .warning:
-            return "额度低于一半"
+            return "Less than half remaining"
         case .critical:
-            return "额度即将用尽"
+            return "Almost depleted"
         }
     }
 }

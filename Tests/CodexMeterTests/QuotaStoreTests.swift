@@ -31,8 +31,21 @@ let quotaStore: [HarnessTest] = [
         suite: "store",
         name: "Stop cancels active refresh and shuts down its provider",
         body: testStopLifecycle
+    ),
+    HarnessTest(
+        suite: "store",
+        name: "Panel-facing failures use English descriptions",
+        body: testFailureDescriptions
     )
 ]
+
+private func testFailureDescriptions() {
+    expectEqual(QuotaStoreFailure.cliNotFound.errorDescription, "Codex CLI was not found. Install Codex first.")
+    expectEqual(QuotaStoreFailure.notAuthenticated.errorDescription, "Codex is not signed in. Sign in with the Codex CLI first.")
+    expectEqual(QuotaStoreFailure.noQuota.errorDescription, "The current account did not return any displayable Codex quota.")
+    expectEqual(QuotaStoreFailure.incompatibleProtocol.errorDescription, "The Codex CLI protocol has changed. Update CodexMeter or the Codex CLI.")
+    expectEqual(QuotaStoreFailure.serviceUnavailable.errorDescription, "Codex quota could not be refreshed. Try again later.")
+}
 
 @MainActor
 private func testRefreshSuccess() async throws {
@@ -234,7 +247,7 @@ private func makeSnapshot(
         account: "developer@example.com",
         model: "gpt-test",
         limitID: "codex",
-        label: "5 小时额度",
+        label: "5-hour quota",
         usedPercent: 100 - remainingPercentage,
         resetTime: resetTime,
         windowDurationMinutes: 300,

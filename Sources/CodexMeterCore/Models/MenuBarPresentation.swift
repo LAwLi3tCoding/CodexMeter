@@ -18,7 +18,7 @@ public struct MenuBarPresentation: Equatable, Sendable {
             countdownText = nil
             labelText = "--"
             displayText = "\(brandText) \(labelText)"
-            accessibilityLabel = "Codex 额度暂不可用"
+            accessibilityLabel = "Codex quota unavailable"
             return
         }
 
@@ -37,9 +37,9 @@ public struct MenuBarPresentation: Equatable, Sendable {
         }
         displayText = "\(brandText) \(percentage)"
         accessibilityLabel = if let countdown {
-            "Codex 剩余 \(remaining)%，\(countdown) 后重置"
+            "Codex \(remaining)% remaining, resets in \(countdown)"
         } else {
-            "Codex 剩余 \(remaining)%"
+            "Codex \(remaining)% remaining"
         }
     }
 

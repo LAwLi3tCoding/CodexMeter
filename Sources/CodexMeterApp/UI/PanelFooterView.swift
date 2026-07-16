@@ -14,8 +14,8 @@ struct PanelFooterView: View {
                 )
             ) {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("自动刷新")
-                    Text("后台自动更新")
+                    Text("Auto Refresh")
+                    Text("Background updates")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -33,14 +33,14 @@ struct PanelFooterView: View {
                         .controlSize(.small)
                         .frame(width: 14, height: 14)
                 } else {
-                    Label("刷新", systemImage: "arrow.clockwise")
+                    Label("Refresh", systemImage: "arrow.clockwise")
                 }
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
             .disabled(store.isRefreshing)
-            .help("立即刷新 Codex 额度")
-            .accessibilityLabel(store.isRefreshing ? "正在刷新" : "立即刷新 Codex 额度")
+            .help("Refresh Codex quota now")
+            .accessibilityLabel(store.isRefreshing ? "Refreshing" : "Refresh Codex quota now")
 
             Button {
                 Task {
@@ -48,13 +48,13 @@ struct PanelFooterView: View {
                     NSApplication.shared.terminate(nil)
                 }
             } label: {
-                Label("退出", systemImage: "power")
+                Label("Quit", systemImage: "power")
             }
             .buttonStyle(.borderless)
             .controlSize(.small)
             .foregroundStyle(.secondary)
             .keyboardShortcut("q")
-            .help("退出 CodexMeter")
+            .help("Quit CodexMeter")
         }
     }
 }

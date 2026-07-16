@@ -88,7 +88,7 @@ private func testMultiBucketMapping() async throws {
     expectEqual(snapshot.model, "gpt-5.5")
     expectEqual(snapshot.quotas.map(\.id), ["codex.primary", "codex.secondary", "codex_spark.primary"])
     expectEqual(snapshot.quotas.map(\.percentage), [75, 60, 95])
-    expectEqual(snapshot.quotas.map(\.label), ["5 小时额度", "周额度", "周额度"])
+    expectEqual(snapshot.quotas.map(\.label), ["5-hour quota", "Weekly quota", "Weekly quota"])
     expectEqual(snapshot.quotas.last?.model, "GPT-5.3-Codex-Spark")
     expectEqual(snapshot.updatedAt, now)
 }

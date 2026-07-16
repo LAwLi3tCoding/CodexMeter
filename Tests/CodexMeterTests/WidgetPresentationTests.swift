@@ -77,7 +77,7 @@ private func testWidgetQuotaPresentationFormatting() {
 
     let item = WidgetQuotaPresentation(snapshot: snapshot, now: now).quotas[0]
 
-    expectEqual(item.label, "5 小时额度")
+    expectEqual(item.label, "5-hour quota")
     expectEqual(item.percentageText, "65%")
     expectEqual(item.countdownText, "3h45m")
     expectEqual(
@@ -165,7 +165,7 @@ private func makeWidgetQuota(
         account: "developer@example.com",
         model: "gpt-5.5",
         limitID: "codex",
-        label: "5 小时额度",
+        label: "5-hour quota",
         usedPercent: 100 - remainingPercent,
         resetTime: resetTime,
         windowDurationMinutes: 300,

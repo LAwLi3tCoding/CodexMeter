@@ -42,19 +42,19 @@ extension TestRegistry {
 }
 
 private func testFiveHourWindowLabel() async throws {
-    expectEqual(QuotaFormatter.windowLabel(minutes: 300), "5 小时额度")
+    expectEqual(QuotaFormatter.windowLabel(minutes: 300), "5-hour quota")
 }
 
 private func testWeeklyWindowLabel() async throws {
-    expectEqual(QuotaFormatter.windowLabel(minutes: 10_080), "周额度")
+    expectEqual(QuotaFormatter.windowLabel(minutes: 10_080), "Weekly quota")
 }
 
 private func testMinuteWindowLabel() async throws {
-    expectEqual(QuotaFormatter.windowLabel(minutes: 90), "90 分钟额度")
+    expectEqual(QuotaFormatter.windowLabel(minutes: 90), "90-minute quota")
 }
 
 private func testMissingWindowDurationLabel() async throws {
-    expectEqual(QuotaFormatter.windowLabel(minutes: nil), "额度")
+    expectEqual(QuotaFormatter.windowLabel(minutes: nil), "Quota")
 }
 
 private func testResetCountdown() async throws {
@@ -69,7 +69,7 @@ private func testResetCountdown() async throws {
     expectEqual(QuotaFormatter.countdown(until: multiDayReset, now: now), "3d2h5m")
     expectEqual(QuotaFormatter.countdown(until: now.addingTimeInterval(30), now: now), "1m")
     expectEqual(QuotaFormatter.countdown(until: now.addingTimeInterval(0.5), now: now), "1m")
-    expectEqual(QuotaFormatter.countdown(until: now, now: now), "即将重置")
+    expectEqual(QuotaFormatter.countdown(until: now, now: now), "Resetting soon")
     expectEqual(QuotaFormatter.countdown(until: nil, now: now), "—")
 }
 

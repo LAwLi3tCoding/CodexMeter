@@ -84,7 +84,7 @@ private func quotaFixture(resetTime: Date?) -> QuotaStatus {
         account: "developer@example.com",
         model: "gpt-test",
         limitID: "codex",
-        label: "5 小时额度",
+        label: "5-hour quota",
         usedPercent: 75,
         resetTime: resetTime,
         windowDurationMinutes: 300,

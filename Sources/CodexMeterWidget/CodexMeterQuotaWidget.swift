@@ -10,8 +10,8 @@ struct CodexMeterQuotaWidget: Widget {
         ) { entry in
             QuotaWidgetView(entry: entry)
         }
-        .configurationDisplayName("Codex 额度")
-        .description("在桌面和通知中心查看 Codex 剩余额度与重置时间。")
+        .configurationDisplayName("Codex Quota")
+        .description("View remaining Codex quota and reset times on the desktop and in Notification Center.")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }

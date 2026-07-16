@@ -60,8 +60,8 @@ struct StatusPanelView: View {
             if presentation.quotaCards.isEmpty {
                 StatusMessageView(
                     symbol: "gauge.with.dots.needle.0percent",
-                    title: "暂无额度数据",
-                    message: "Codex CLI 没有返回可展示的额度窗口。"
+                    title: "No quota data",
+                    message: "Codex CLI did not return a displayable quota window."
                 )
             } else if presentation.requiresQuotaOverflow {
                 ScrollView {
@@ -74,22 +74,22 @@ struct StatusPanelView: View {
         } else if store.isRefreshing {
             StatusMessageView(
                 symbol: "bolt.horizontal.circle",
-                title: "正在读取 Codex 额度",
-                message: "通过本机 Codex CLI 安全获取当前状态。",
+                title: "Reading Codex quota",
+                message: "Securely reading current status from the local Codex CLI.",
                 showsProgress: true
             )
         } else if let failure = store.failure {
             StatusMessageView(
                 symbol: "exclamationmark.triangle.fill",
-                title: "无法读取额度",
+                title: "Unable to read quota",
                 message: failure.localizedDescription,
                 role: .error
             )
         } else {
             StatusMessageView(
                 symbol: "gauge.with.dots.needle.33percent",
-                title: "等待额度数据",
-                message: "CodexMeter 将自动刷新。"
+                title: "Waiting for quota data",
+                message: "CodexMeter will refresh automatically."
             )
         }
     }

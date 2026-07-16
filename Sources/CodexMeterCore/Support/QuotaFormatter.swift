@@ -2,28 +2,28 @@ import Foundation
 
 public enum QuotaFormatter {
     public static func windowLabel(minutes: Int?) -> String {
-        guard let minutes else { return "额度" }
+        guard let minutes else { return "Quota" }
 
         if minutes == 10_080 {
-            return "周额度"
+            return "Weekly quota"
         }
 
         if minutes >= 1_440, minutes.isMultiple(of: 1_440) {
-            return "\(minutes / 1_440) 天额度"
+            return "\(minutes / 1_440)-day quota"
         }
 
         if minutes >= 60, minutes.isMultiple(of: 60) {
-            return "\(minutes / 60) 小时额度"
+            return "\(minutes / 60)-hour quota"
         }
 
-        return "\(minutes) 分钟额度"
+        return "\(minutes)-minute quota"
     }
 
     public static func countdown(until resetTime: Date?, now: Date = Date()) -> String {
         guard let resetTime else { return "—" }
 
         let remainingInterval = resetTime.timeIntervalSince(now)
-        guard remainingInterval > 0 else { return "即将重置" }
+        guard remainingInterval > 0 else { return "Resetting soon" }
 
         let remainingSeconds = Int(remainingInterval)
 

@@ -13,15 +13,15 @@ extension QuotaStoreFailure: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case .cliNotFound:
-            return "未找到 Codex CLI，请先安装 Codex。"
+            return "Codex CLI was not found. Install Codex first."
         case .notAuthenticated:
-            return "Codex 尚未登录，请先通过 Codex CLI 登录。"
+            return "Codex is not signed in. Sign in with the Codex CLI first."
         case .noQuota:
-            return "当前账号未返回可展示的 Codex 额度。"
+            return "The current account did not return any displayable Codex quota."
         case .incompatibleProtocol:
-            return "Codex CLI 协议已变化，请更新 CodexMeter 或 Codex CLI。"
+            return "The Codex CLI protocol has changed. Update CodexMeter or the Codex CLI."
         case .serviceUnavailable:
-            return "暂时无法刷新 Codex 额度，请稍后重试。"
+            return "Codex quota could not be refreshed. Try again later."
         }
     }
 }

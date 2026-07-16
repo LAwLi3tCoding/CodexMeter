@@ -36,7 +36,7 @@ private func testMenuBarUsesMostConstrainedQuota() {
 
     expectEqual(presentation.percentageText, "40%")
     expectEqual(presentation.countdownText, "3h45m")
-    expectEqual(presentation.accessibilityLabel, "Codex 剩余 40%，3h45m 后重置")
+    expectEqual(presentation.accessibilityLabel, "Codex 40% remaining, resets in 3h45m")
     expectEqual(presentation.brandText, "Codex")
     expectEqual(presentation.systemImageName, "gauge.medium")
 }
@@ -47,7 +47,7 @@ private func testMenuBarEmptyState() {
     expectEqual(presentation.displayText, "Codex --")
     expectEqual(presentation.percentageText, "--")
     expectNil(presentation.countdownText)
-    expectEqual(presentation.accessibilityLabel, "Codex 额度暂不可用")
+    expectEqual(presentation.accessibilityLabel, "Codex quota unavailable")
     expectEqual(presentation.brandText, "Codex")
     expectEqual(presentation.systemImageName, "gauge.medium")
 }

@@ -45,7 +45,7 @@ public struct WidgetQuotaPresentation: Equatable, Sendable {
 
     public init(snapshot: WidgetQuotaSnapshot, now: Date = Date()) {
         modelText = snapshot.model
-        updatedText = "更新于 \(QuotaFormatter.clock(for: snapshot.updatedAt))"
+        updatedText = "Updated at \(QuotaFormatter.clock(for: snapshot.updatedAt))"
         isStale = now.timeIntervalSince(snapshot.updatedAt) >= 15 * 60
         quotas = snapshot.quotas
             .sorted(by: Self.isMoreConstrained)

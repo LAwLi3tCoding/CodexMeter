@@ -41,10 +41,10 @@ public struct QuotaCardPresentation: Equatable, Sendable {
         title = quota.label
         modelText = quota.model
         percentageText = "\(remaining)%"
-        remainingText = "剩余 \(remaining)%"
-        usedText = "已用 \(used)%"
+        remainingText = "\(remaining)% remaining"
+        usedText = "\(used)% used"
         countdownText = countdown
-        resetText = "重置 \(resetClock)"
+        resetText = "Resets at \(resetClock)"
         progress = normalizedProgress
         segmentFillAmounts = (0..<10).map { index in
             min(max((normalizedProgress * 10) - Double(index), 0), 1)
@@ -52,14 +52,14 @@ public struct QuotaCardPresentation: Equatable, Sendable {
         level = Self.level(for: quota.percentage)
         accessibilityLabel = [
             quota.label,
-            "模型 \(quota.model)",
-            "剩余 \(remaining)%",
-            "已用 \(used)%",
-            quota.resetTime == nil ? nil : "距重置 \(countdown)",
-            quota.resetTime == nil ? nil : "重置 \(resetClock)"
+            "model \(quota.model)",
+            "\(remaining)% remaining",
+            "\(used)% used",
+            quota.resetTime == nil ? nil : "resets in \(countdown)",
+            quota.resetTime == nil ? nil : "resets at \(resetClock)"
         ]
         .compactMap { $0 }
-        .joined(separator: "，")
+        .joined(separator: ", ")
     }
 
     private static func level(for percentage: Double) -> QuotaLevel {
@@ -96,7 +96,7 @@ public struct StatusPanelPresentation: Equatable, Sendable {
             case .chatGPT:
                 "ChatGPT account"
             case .unknown:
-                "Codex 账号"
+                "Codex account"
             }
         }
         planText = Self.planDisplayText(
@@ -104,7 +104,7 @@ public struct StatusPanelPresentation: Equatable, Sendable {
             provider: snapshot.provider
         )
         modelText = snapshot.model
-        updatedText = "更新于 \(QuotaFormatter.clock(for: snapshot.updatedAt, timeZone: timeZone))"
+        updatedText = "Updated at \(QuotaFormatter.clock(for: snapshot.updatedAt, timeZone: timeZone))"
         let cards = snapshot.quotas
             .sorted(by: Self.quotaDisplayOrder)
             .map {

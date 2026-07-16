@@ -65,7 +65,7 @@ private struct SmallQuotaWidget: View {
                 Text(quota.countdownText)
                     .monospacedDigit()
                 Spacer(minLength: 4)
-                Text(presentation.isStale ? "数据稍旧" : presentation.updatedText)
+                Text(presentation.isStale ? "Stale" : presentation.updatedText)
                     .lineLimit(1)
             }
             .font(.system(size: 9, weight: .medium))
@@ -97,7 +97,7 @@ private struct MediumQuotaWidget: View {
 
             Spacer(minLength: 0)
 
-            Text(presentation.isStale ? "数据稍旧 · 打开 CodexMeter 刷新" : presentation.updatedText)
+            Text(presentation.isStale ? "Stale · Open CodexMeter to refresh" : presentation.updatedText)
                 .font(.system(size: 9, weight: .medium))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
@@ -161,7 +161,7 @@ private struct WidgetHeader: View {
             Circle()
                 .fill(isStale ? Color.orange : Color.green)
                 .frame(width: 6, height: 6)
-                .accessibilityLabel(isStale ? "数据稍旧" : "数据已更新")
+                .accessibilityLabel(isStale ? "Data is stale" : "Data is up to date")
         }
     }
 }
@@ -197,9 +197,9 @@ private struct WidgetEmptyState: View {
             Image(systemName: "gauge.with.dots.needle.0percent")
                 .font(.system(size: 28, weight: .medium))
                 .foregroundStyle(.secondary)
-            Text("等待 Codex 数据")
+            Text("Waiting for Codex data")
                 .font(.headline)
-            Text("打开 CodexMeter 一次即可同步额度。")
+            Text("Open CodexMeter once to sync quota data.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
