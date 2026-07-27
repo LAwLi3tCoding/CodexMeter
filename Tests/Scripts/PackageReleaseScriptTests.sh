@@ -329,6 +329,32 @@ test_rejects_unapproved_domain_in_existing_app() {
   done
 }
 
+test_uses_macho_aware_string_scan() {
+  local case_dir="$TEST_ROOT/macho-aware-strings"
+  local app_dir="$case_dir/CodexMeter.app"
+  local output_dir="$case_dir/dist"
+  local bin_dir="$case_dir/bin"
+
+  make_fake_app "$app_dir" "0.1.0"
+  make_fake_commands "$bin_dir"
+  cat > "$bin_dir/strings" <<'EOF'
+#!/bin/zsh
+set -euo pipefail
+
+if [[ "$#" -eq 1 && "$1" != -* ]]; then
+  print -r -- "safe executable string"
+else
+  print -r -- "signature-noise.private-example.app"
+fi
+EOF
+  chmod +x "$bin_dir/strings"
+
+  CODEXMETER_APP_PATH="$app_dir" \
+    CODEXMETER_OUTPUT_DIR="$output_dir" \
+    PATH="$bin_dir:$PATH" \
+    zsh "$PACKAGE_SCRIPT" v0.1.0 >/dev/null
+}
+
 test_rejects_version_mismatch() {
   local case_dir="$TEST_ROOT/version-mismatch"
   local app_dir="$case_dir/CodexMeter.app"
@@ -457,6 +483,7 @@ test_rejects_mismatched_license
 test_rejects_local_path_in_existing_app
 test_rejects_email_in_existing_widget
 test_rejects_unapproved_domain_in_existing_app
+test_uses_macho_aware_string_scan
 test_rejects_version_mismatch
 test_rejects_missing_icon
 test_rejects_icon_metadata_mismatch

@@ -8,7 +8,7 @@ usage() {
 Create CodexMeter GitHub Release assets.
 
 Usage:
-  ./scripts/package-release.sh v0.3.1
+  ./scripts/package-release.sh v0.3.2
 
 Environment variables:
   CODEXMETER_APP_PATH     Package an existing CodexMeter.app instead of building it
@@ -59,7 +59,7 @@ assert_release_binary_private() {
   local_path_pattern="${macos_home_prefix}|${linux_home_prefix}|${macos_temp_prefix}"
   public_domain_pattern='([a-z0-9-]+\.)+([a-z]{2}|com|net|org|edu|gov|int|mil|info|biz|name|pro|mobi|travel|jobs|museum|aero|asia|cat|tel|dev|app|cloud|tech|xyz|solutions|company|technology|software|systems|digital|online|site|store|agency|tools|services|engineering|consulting|business|work)[[:>:]]'
 
-  if ! printable_strings="$(strings -a - < "$binary")"; then
+  if ! printable_strings="$(strings "$binary")"; then
     echo "Privacy check failed for $label: unable to inspect executable strings." >&2
     return 1
   fi

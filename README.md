@@ -13,6 +13,7 @@ CodexMeter is a native macOS menu bar app that shows the remaining quota reporte
 ## Features
 
 - Compact, always-visible menu bar remaining percentage such as `Codex 64%`.
+- Menu bar quota selection prioritizes the advanced Codex model bucket over Spark-specific limits.
 - Reset countdowns in the dashboard and widgets use days, hours, and minutes, such as `3d2h5m`.
 - Multiple quota windows, including five-hour, weekly, and model-specific limits.
 - Current Codex account type, masked account email, plan, and configured model.
@@ -47,7 +48,7 @@ To install a specific release or choose the destination:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/LAwLi3tCoding/CodexMeter/main/scripts/install.sh \
-  | CODEXMETER_VERSION=v0.3.1 CODEXMETER_INSTALL_DIR="$HOME/Applications" zsh
+  | CODEXMETER_VERSION=v0.3.2 CODEXMETER_INSTALL_DIR="$HOME/Applications" zsh
 ```
 
 Then launch CodexMeter:
@@ -58,7 +59,7 @@ open /Applications/CodexMeter.app
 
 Launch the containing app once so macOS can discover its widget extension. On macOS 14 or later, Control-click the desktop, choose **Edit Widgets**, search for **CodexMeter**, then add the small or medium widget. The same widget can be added to Notification Center on macOS 13 or later.
 
-Version 0.3.1 provides an Apple Silicon (`arm64`) binary. Intel Macs can build a native binary from source.
+Version 0.3.2 provides an Apple Silicon (`arm64`) binary. Intel Macs can build a native binary from source.
 
 ## Build from source
 
@@ -180,7 +181,7 @@ Release archives include the canonical MIT license and omit AppleDouble resource
 
 - ChatGPT Codex rate limits are displayed only when the installed CLI exposes them.
 - API-key accounts are identified, but OpenAI API billing and organization limits are not implemented.
-- Usage history and charts are planned extension points, not part of version 0.3.1.
+- Usage history and charts are planned extension points, not part of version 0.3.2.
 - Notifications require launching the assembled `.app` bundle so macOS has a bundle identity.
 - Widget updates are scheduled by macOS and cannot guarantee the menu app's one-minute refresh interval.
 

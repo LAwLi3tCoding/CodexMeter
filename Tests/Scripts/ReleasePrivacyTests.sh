@@ -35,7 +35,7 @@ assert_binary_is_private() {
   local_path_pattern="${macos_home_prefix}|${linux_home_prefix}|${macos_temp_prefix}"
   public_domain_pattern='([a-z0-9-]+\.)+([a-z]{2}|com|net|org|edu|gov|int|mil|info|biz|name|pro|mobi|travel|jobs|museum|aero|asia|cat|tel|dev|app|cloud|tech|xyz|solutions|company|technology|software|systems|digital|online|site|store|agency|tools|services|engineering|consulting|business|work)[[:>:]]'
 
-  strings -a - < "$binary" > "$strings_file"
+  strings "$binary" > "$strings_file"
 
   if LC_ALL=C grep -Eq "$local_path_pattern" "$strings_file"; then
     fail "$label contains a local filesystem path"
@@ -53,9 +53,9 @@ assert_binary_is_private() {
 }
 
 if ! package_output="$(
-  CODEXMETER_SWIFT_SCRATCH_PATH="$SWIFT_SCRATCH_PATH" \
+    CODEXMETER_SWIFT_SCRATCH_PATH="$SWIFT_SCRATCH_PATH" \
     CODEXMETER_OUTPUT_DIR="$OUTPUT_DIR" \
-    "$ROOT_DIR/scripts/package-release.sh" v0.3.1 2>&1
+    "$ROOT_DIR/scripts/package-release.sh" v0.3.2 2>&1
 )"; then
   print -r -- "$package_output" >&2
   fail "release packaging failed"

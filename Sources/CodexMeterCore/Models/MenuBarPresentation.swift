@@ -13,7 +13,12 @@ public struct MenuBarPresentation: Equatable, Sendable {
         brandText = "Codex"
         systemImageName = "gauge.medium"
 
-        guard let quota = quotas.min(by: Self.isMoreConstrained) else {
+        let advancedModelQuotas = quotas.filter {
+            $0.limitID.caseInsensitiveCompare("codex") == .orderedSame
+        }
+        let displayQuotas = advancedModelQuotas.isEmpty ? quotas : advancedModelQuotas
+
+        guard let quota = displayQuotas.min(by: Self.isMoreConstrained) else {
             percentageText = "--"
             countdownText = nil
             labelText = "--"

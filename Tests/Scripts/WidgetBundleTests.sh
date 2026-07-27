@@ -47,10 +47,10 @@ cmp -s "$ROOT_DIR/LICENSE" "$BUNDLED_LICENSE" || fail "bundled LICENSE differs f
   || fail "widget CFBundleExecutable is not CodexMeterWidget"
 [[ "$(plist_value "$WIDGET_INFO" CFBundleIdentifier)" == "com.codexmeter.CodexMeter.Widget" ]] \
   || fail "widget CFBundleIdentifier is invalid"
-[[ "$(plist_value "$WIDGET_INFO" CFBundleShortVersionString)" == "0.3.1" ]] \
-  || fail "widget short version is not 0.3.1"
-[[ "$(plist_value "$WIDGET_INFO" CFBundleVersion)" == "4" ]] \
-  || fail "widget build version is not 4"
+[[ "$(plist_value "$WIDGET_INFO" CFBundleShortVersionString)" == "0.3.2" ]] \
+  || fail "widget short version is not 0.3.2"
+[[ "$(plist_value "$WIDGET_INFO" CFBundleVersion)" == "5" ]] \
+  || fail "widget build version is not 5"
 [[ "$(plist_value "$WIDGET_INFO" LSMinimumSystemVersion)" == "13.0" ]] \
   || fail "widget minimum macOS version is not 13.0"
 [[ "$(plist_value "$WIDGET_INFO" NSExtension.NSExtensionPointIdentifier)" == "com.apple.widgetkit-extension" ]] \
