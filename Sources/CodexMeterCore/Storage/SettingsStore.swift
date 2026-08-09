@@ -26,6 +26,7 @@ public final class SettingsStore: @unchecked Sendable {
     private enum Key {
         static let autoRefreshEnabled = "autoRefreshEnabled"
         static let refreshInterval = "refreshInterval"
+        static let localProxyURL = "localProxyURL"
         static let sentThresholds = "sentNotificationThresholds"
     }
 
@@ -55,6 +56,29 @@ public final class SettingsStore: @unchecked Sendable {
         set {
             defaults.set(max(15, newValue), forKey: Key.refreshInterval)
         }
+    }
+
+    public var localProxyURL: String? {
+        get {
+            Self.validatedLocalProxyURL(defaults.string(forKey: Key.localProxyURL))
+        }
+        set {
+            _ = updateLocalProxyURL(newValue)
+        }
+    }
+
+    @discardableResult
+    public func updateLocalProxyURL(_ value: String?) -> Bool {
+        let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let trimmed, !trimmed.isEmpty else {
+            defaults.removeObject(forKey: Key.localProxyURL)
+            return true
+        }
+        guard let normalized = Self.validatedLocalProxyURL(trimmed) else {
+            return false
+        }
+        defaults.set(normalized, forKey: Key.localProxyURL)
+        return true
     }
 
     public func sentThresholds(for cycleKey: String) -> Set<Int> {
@@ -117,5 +141,26 @@ public final class SettingsStore: @unchecked Sendable {
         }
 
         return .empty
+    }
+
+    public static func validatedLocalProxyURL(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else { return nil }
+        guard let components = URLComponents(string: normalized),
+              ["http", "https"].contains(components.scheme?.lowercased() ?? ""),
+              let host = components.host?.lowercased(),
+              ["localhost", "127.0.0.1", "::1", "[::1]"].contains(host),
+              components.port != nil,
+              components.user == nil,
+              components.password == nil,
+              components.query == nil,
+              components.fragment == nil,
+              components.path.isEmpty,
+              let port = components.port,
+              (1...65_535).contains(port) else {
+            return nil
+        }
+        return normalized
     }
 }

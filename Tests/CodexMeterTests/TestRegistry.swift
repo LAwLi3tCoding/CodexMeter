@@ -11,8 +11,10 @@ enum TestRegistry {
         + settingsStore
         + quotaStore
         + quotaCardPresentation
+        + usageDashboard
         + widgetSnapshot
         + widgetPresentation
 
     static let live = codexLiveSmoke
+    static let liveUsage = codexLiveUsageSmoke
 }

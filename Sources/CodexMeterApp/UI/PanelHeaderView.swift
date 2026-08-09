@@ -7,20 +7,20 @@ struct PanelHeaderView: View {
     let staleFailure: QuotaStoreFailure?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 11) {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 9) {
                 Image(nsImage: NSApplication.shared.applicationIconImage)
                     .resizable()
                     .interpolation(.high)
-                    .frame(width: 34, height: 34)
+                    .frame(width: 27, height: 27)
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("CodexMeter")
-                        .font(.title3.weight(.semibold))
+                        .font(.headline.weight(.semibold))
 
                     Text("Codex Usage Dashboard")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
 
@@ -29,8 +29,8 @@ struct PanelHeaderView: View {
                 if let plan = presentation?.planText {
                     Text(plan)
                         .font(.caption2.weight(.semibold))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
                         .foregroundStyle(.secondary)
                         .background(.quaternary, in: Capsule())
                 }
@@ -50,8 +50,9 @@ struct PanelHeaderView: View {
                     value: presentation?.updatedText ?? "Not updated"
                 )
             }
-            .padding(10)
-            .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .padding(.horizontal, 7)
+            .padding(.vertical, 6)
+            .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
 
             if let staleFailure {
                 Label {
@@ -60,7 +61,7 @@ struct PanelHeaderView: View {
                 } icon: {
                     Image(systemName: "exclamationmark.arrow.triangle.2.circlepath")
                 }
-                .font(.caption)
+                .font(.caption2)
                 .foregroundStyle(.orange)
                 .accessibilityLabel("Quota data may be stale. \(staleFailure.localizedDescription)")
             }
@@ -74,14 +75,14 @@ private struct MetadataItem: View {
     let value: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: 2) {
             Text(label)
                 .font(.caption2.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .tracking(0.6)
 
             Text(value)
-                .font(.caption.weight(.medium))
+                .font(.caption2.weight(.medium))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .help(value)

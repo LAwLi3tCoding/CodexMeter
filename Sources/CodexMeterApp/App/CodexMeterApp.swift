@@ -30,16 +30,47 @@ struct CodexMeterApp: App {
     @MainActor
     private static func makeStore() -> QuotaStore {
         let widgetPublisher = AppWidgetSnapshotPublisher()
+        let settings = SettingsStore()
+        let cachedSnapshot = WidgetSnapshotStore.sharedApplicationSupport()?
+            .read()
+            .map(ProviderSnapshot.init(cachedWidgetSnapshot:))
 
         do {
-            let client = try CodexAppServerClient()
+            let processEnvironment = settings.localProxyURL.map { proxyURL in
+                [
+                    "HTTP_PROXY": proxyURL,
+                    "HTTPS_PROXY": proxyURL,
+                    "http_proxy": proxyURL,
+                    "https_proxy": proxyURL
+                ]
+            } ?? [:]
+            let quotaClient = try CodexAppServerClient(
+                processEnvironment: processEnvironment
+            )
+            let usageClient = try CodexAppServerClient(
+                processEnvironment: processEnvironment
+            )
+            let modelUsageReader: any ModelUsageReading
+            if let databaseURL = SQLiteThreadModelUsageReader.defaultDatabaseURL() {
+                modelUsageReader = SQLiteThreadModelUsageReader(databaseURL: databaseURL)
+            } else {
+                modelUsageReader = UnavailableModelUsageReader()
+            }
             return QuotaStore(
-                provider: CodexProvider(client: client),
+                provider: CodexProvider(client: quotaClient),
+                usageProvider: CodexUsageProvider(
+                    client: usageClient,
+                    modelUsageReader: modelUsageReader
+                ),
+                initialSnapshot: cachedSnapshot,
+                settings: settings,
                 widgetPublisher: widgetPublisher
             )
         } catch {
             return QuotaStore(
                 provider: MissingCodexProvider(),
+                initialSnapshot: cachedSnapshot,
+                settings: settings,
                 widgetPublisher: widgetPublisher
             )
         }

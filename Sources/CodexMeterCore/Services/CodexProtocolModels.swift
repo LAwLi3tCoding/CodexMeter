@@ -90,3 +90,61 @@ public struct CodexConfigResponse: Codable, Equatable, Sendable {
         self.config = config
     }
 }
+
+public struct CodexTokenUsageDailyBucket: Codable, Equatable, Sendable {
+    public let startDate: String
+    public let tokens: Int64
+
+    public init(startDate: String, tokens: Int64) {
+        self.startDate = startDate
+        self.tokens = tokens
+    }
+}
+
+public struct CodexTokenUsageSummary: Codable, Equatable, Sendable {
+    public let currentStreakDays: Int64?
+    public let lifetimeTokens: Int64?
+    public let longestRunningTurnSec: Int64?
+    public let longestStreakDays: Int64?
+    public let peakDailyTokens: Int64?
+
+    public init(
+        currentStreakDays: Int64? = nil,
+        lifetimeTokens: Int64? = nil,
+        longestRunningTurnSec: Int64? = nil,
+        longestStreakDays: Int64? = nil,
+        peakDailyTokens: Int64? = nil
+    ) {
+        self.currentStreakDays = currentStreakDays
+        self.lifetimeTokens = lifetimeTokens
+        self.longestRunningTurnSec = longestRunningTurnSec
+        self.longestStreakDays = longestStreakDays
+        self.peakDailyTokens = peakDailyTokens
+    }
+}
+
+public struct CodexTokenUsageResponse: Codable, Equatable, Sendable {
+    public let summary: CodexTokenUsageSummary
+    public let dailyUsageBuckets: [CodexTokenUsageDailyBucket]?
+
+    public init(
+        summary: CodexTokenUsageSummary,
+        dailyUsageBuckets: [CodexTokenUsageDailyBucket]? = nil
+    ) {
+        self.summary = summary
+        self.dailyUsageBuckets = dailyUsageBuckets
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        summary = try container.decode(CodexTokenUsageSummary.self, forKey: .summary)
+        dailyUsageBuckets = try container.decodeIfPresent(
+            [CodexTokenUsageDailyBucket].self,
+            forKey: .dailyUsageBuckets
+        )
+    }
+
+    public static let empty = CodexTokenUsageResponse(
+        summary: CodexTokenUsageSummary()
+    )
+}

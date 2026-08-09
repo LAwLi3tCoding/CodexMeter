@@ -6,6 +6,11 @@ public enum QuotaLevel: Equatable, Sendable {
     case critical
 }
 
+public enum QuotaCardDisplayStyle: Equatable, Sendable {
+    case standard
+    case compact
+}
+
 public struct QuotaCardPresentation: Equatable, Sendable {
     public let id: String
     public let title: String
@@ -18,6 +23,7 @@ public struct QuotaCardPresentation: Equatable, Sendable {
     public let progress: Double
     public let segmentFillAmounts: [Double]
     public let level: QuotaLevel
+    public let displayStyle: QuotaCardDisplayStyle
     public let accessibilityLabel: String
 
     public init(
@@ -50,6 +56,9 @@ public struct QuotaCardPresentation: Equatable, Sendable {
             min(max((normalizedProgress * 10) - Double(index), 0), 1)
         }
         level = Self.level(for: quota.percentage)
+        displayStyle = (quota.windowDurationMinutes ?? 0) >= 10_080
+            ? .compact
+            : .standard
         accessibilityLabel = [
             quota.label,
             "model \(quota.model)",

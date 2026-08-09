@@ -26,6 +26,16 @@ extension QuotaStoreFailure: LocalizedError {
     }
 }
 
+public enum UsageStoreFailure: Error, Equatable, Sendable {
+    case unavailable
+}
+
+extension UsageStoreFailure: LocalizedError {
+    public var errorDescription: String? {
+        "Usage history is temporarily unavailable."
+    }
+}
+
 public protocol WidgetSnapshotPublishing: Sendable {
     func publish(_ snapshot: ProviderSnapshot) async
 }
@@ -37,11 +47,14 @@ private struct NoOpWidgetSnapshotPublisher: WidgetSnapshotPublishing {
 @MainActor
 public final class QuotaStore: ObservableObject {
     @Published public private(set) var snapshot: ProviderSnapshot?
+    @Published public private(set) var usageSnapshot: UsageSnapshot?
     @Published public private(set) var isRefreshing = false
     @Published public private(set) var failure: QuotaStoreFailure?
+    @Published public private(set) var usageFailure: UsageStoreFailure?
     @Published public private(set) var autoRefreshEnabled: Bool
 
     private let provider: any QuotaProvider
+    private let usageProvider: (any UsageProviding)?
     private let settings: SettingsStore
     private let notifier: any NotificationDelivering
     private let notificationPolicy: NotificationPolicy
@@ -53,12 +66,16 @@ public final class QuotaStore: ObservableObject {
 
     public init(
         provider: any QuotaProvider,
+        usageProvider: (any UsageProviding)? = nil,
+        initialSnapshot: ProviderSnapshot? = nil,
         settings: SettingsStore = SettingsStore(),
         notifier: any NotificationDelivering = NotificationService(),
         notificationPolicy: NotificationPolicy = NotificationPolicy(),
         widgetPublisher: (any WidgetSnapshotPublishing)? = nil
     ) {
         self.provider = provider
+        self.usageProvider = usageProvider
+        self.snapshot = initialSnapshot
         self.settings = settings
         self.notifier = notifier
         self.notificationPolicy = notificationPolicy
@@ -87,6 +104,7 @@ public final class QuotaStore: ObservableObject {
         let activeRefresh = refreshTask
         activeRefresh?.cancel()
         await provider.shutdown()
+        await usageProvider?.shutdown()
         await activeRefresh?.value
         refreshTask = nil
     }
@@ -96,6 +114,15 @@ public final class QuotaStore: ObservableObject {
         autoRefreshEnabled = enabled
         settings.autoRefreshEnabled = enabled
         restartAutoRefreshLoop()
+    }
+
+    public var localProxyURL: String? {
+        settings.localProxyURL
+    }
+
+    @discardableResult
+    public func setLocalProxyURL(_ value: String?) -> Bool {
+        settings.updateLocalProxyURL(value)
     }
 
     public func refresh() async {
@@ -129,6 +156,12 @@ public final class QuotaStore: ObservableObject {
         isRefreshing = true
         defer { isRefreshing = false }
 
+        async let quotaRefresh: Void = refreshQuota()
+        async let usageRefresh: Void = refreshUsageIfAvailable()
+        _ = await (quotaRefresh, usageRefresh)
+    }
+
+    private func refreshQuota() async {
         do {
             let newSnapshot = try await provider.fetchSnapshot()
             guard !Task.isCancelled else { return }
@@ -139,6 +172,20 @@ public final class QuotaStore: ObservableObject {
         } catch {
             guard !Task.isCancelled else { return }
             failure = Self.classify(error)
+        }
+    }
+
+    private func refreshUsageIfAvailable() async {
+        guard let usageProvider else { return }
+
+        do {
+            let usage = try await usageProvider.fetchUsage()
+            guard !Task.isCancelled else { return }
+            usageSnapshot = usage
+            usageFailure = nil
+        } catch {
+            guard !Task.isCancelled else { return }
+            usageFailure = .unavailable
         }
     }
 

@@ -57,3 +57,30 @@ public struct WidgetQuotaSnapshot: Codable, Equatable, Sendable {
         updatedAt = snapshot.updatedAt
     }
 }
+
+public extension ProviderSnapshot {
+    init(cachedWidgetSnapshot snapshot: WidgetQuotaSnapshot) {
+        self.init(
+            provider: snapshot.provider,
+            account: nil,
+            accountKind: .unknown,
+            plan: nil,
+            model: snapshot.model,
+            quotas: snapshot.quotas.map { quota in
+                QuotaStatus(
+                    id: quota.id,
+                    provider: snapshot.provider,
+                    account: nil,
+                    model: quota.model,
+                    limitID: quota.id,
+                    label: quota.label,
+                    usedPercent: 100 - quota.remainingPercent,
+                    resetTime: quota.resetTime,
+                    windowDurationMinutes: quota.windowDurationMinutes,
+                    updatedAt: snapshot.updatedAt
+                )
+            },
+            updatedAt: snapshot.updatedAt
+        )
+    }
+}

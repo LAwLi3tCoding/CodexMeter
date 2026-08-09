@@ -1,0 +1,170 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="1120" viewBox="0 0 920 1120" role="img" aria-labelledby="title desc">
+  <title id="title">CodexMeter usage dashboard</title>
+  <desc id="desc">A dark macOS-style CodexMeter panel with quota cards, a thirty-day token chart, exact hover details, model insights, and an orange-red streak badge. All values are example data.</desc>
+  <defs>
+    <linearGradient id="shell" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#24272c"/>
+      <stop offset="1" stop-color="#16181b"/>
+    </linearGradient>
+    <linearGradient id="blueWash" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#178cff" stop-opacity=".12"/>
+      <stop offset=".48" stop-color="#178cff" stop-opacity=".02"/>
+      <stop offset="1" stop-color="#178cff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="quotaGreen" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#20c66b"/>
+      <stop offset="1" stop-color="#48dd88"/>
+    </linearGradient>
+    <linearGradient id="quotaAmber" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff8a25"/>
+      <stop offset="1" stop-color="#ffb24a"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="18" stdDeviation="28" flood-color="#000" flood-opacity=".34"/>
+    </filter>
+    <filter id="tooltipShadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity=".38"/>
+    </filter>
+    <style>
+      .ui { font-family: "SF Pro Display", "Helvetica Neue", sans-serif; }
+      .mono { font-family: "SF Mono", "Menlo", monospace; }
+      .muted { fill: #90949c; }
+      .quiet { fill: #6f737a; }
+      .label { fill: #9498a1; font-size: 18px; font-weight: 700; letter-spacing: 1.3px; }
+      .body { fill: #edf0f4; font-size: 22px; font-weight: 600; }
+      .small { fill: #a4a8b0; font-size: 17px; font-weight: 500; }
+      .hairline { stroke: #ffffff; stroke-opacity: .075; }
+    </style>
+  </defs>
+
+  <rect width="920" height="1120" fill="#0f1012"/>
+  <rect x="22" y="22" width="876" height="1076" rx="34" fill="url(#shell)" class="hairline" filter="url(#shadow)"/>
+
+  <g class="ui">
+    <!-- Header -->
+    <rect x="42" y="42" width="836" height="146" rx="26" fill="#292c31" class="hairline"/>
+    <circle cx="91" cy="91" r="28" fill="#15171a" stroke="#ffffff" stroke-opacity=".09"/>
+    <path d="M91 69a22 22 0 1 1-15.6 6.4" fill="none" stroke="#2c9cff" stroke-width="7" stroke-linecap="round"/>
+    <path d="M91 77v14l10 7" fill="none" stroke="#edf0f4" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="133" y="88" fill="#f4f5f7" font-size="32" font-weight="760">CodexMeter</text>
+    <text x="133" y="119" class="small">Codex usage dashboard</text>
+    <rect x="704" y="65" width="142" height="48" rx="24" fill="#ffffff" fill-opacity=".08" stroke="#ffffff" stroke-opacity=".08"/>
+    <text x="775" y="96" text-anchor="middle" fill="#c8cbd1" font-size="20" font-weight="700">PRO 20X</text>
+    <line x1="65" y1="135" x2="855" y2="135" stroke="#ffffff" stroke-opacity=".06"/>
+    <text x="66" y="163" class="label" font-size="14">ACCOUNT</text>
+    <text x="178" y="163" class="small" font-size="15">SIGNED IN</text>
+    <text x="344" y="163" class="label" font-size="14">MODEL</text>
+    <text x="430" y="163" class="small" font-size="15">gpt-5.6-sol</text>
+    <text x="670" y="163" class="label" font-size="14">UPDATED</text>
+    <text x="776" y="163" class="small" font-size="15">12:18</text>
+
+    <!-- Quota cards -->
+    <rect x="42" y="208" width="408" height="224" rx="26" fill="#252d29" stroke="#31d178" stroke-opacity=".16"/>
+    <text x="70" y="249" fill="#f1f3f5" font-size="25" font-weight="720">5-hour quota</text>
+    <circle cx="416" cy="241" r="8" fill="#35d477"/>
+    <text x="70" y="279" class="small">gpt-5.6-sol</text>
+    <text x="70" y="343" fill="#38d87b" font-size="50" font-weight="760">72%</text>
+    <text x="190" y="343" class="small">remaining</text>
+    <rect x="70" y="366" width="346" height="12" rx="6" fill="#ffffff" fill-opacity=".07"/>
+    <rect x="70" y="366" width="249" height="12" rx="6" fill="url(#quotaGreen)"/>
+    <text x="70" y="405" class="small">28% used</text>
+    <text x="416" y="405" text-anchor="end" class="small">resets in 3h44m</text>
+
+    <rect x="470" y="208" width="408" height="224" rx="26" fill="#302a25" stroke="#ff9a32" stroke-opacity=".17"/>
+    <text x="498" y="249" fill="#f1f3f5" font-size="25" font-weight="720">Weekly quota</text>
+    <circle cx="844" cy="241" r="8" fill="#ff9a32"/>
+    <text x="498" y="279" class="small">gpt-5.6-sol</text>
+    <text x="498" y="343" fill="#ff9a32" font-size="50" font-weight="760">38%</text>
+    <text x="618" y="343" class="small">remaining</text>
+    <rect x="498" y="366" width="346" height="12" rx="6" fill="#ffffff" fill-opacity=".07"/>
+    <rect x="498" y="366" width="131" height="12" rx="6" fill="url(#quotaAmber)"/>
+    <text x="498" y="405" class="small">62% used</text>
+    <text x="844" y="405" text-anchor="end" class="small">resets in 3d2h</text>
+
+    <!-- Usage dashboard -->
+    <rect x="42" y="452" width="836" height="526" rx="28" fill="#23262b" class="hairline"/>
+    <rect x="42" y="452" width="836" height="526" rx="28" fill="url(#blueWash)"/>
+    <text x="68" y="486" class="label" font-size="14">30-DAY TOKEN SKYLINE</text>
+    <text x="68" y="516" fill="#f0f2f5" font-size="22" font-weight="680">Local Codex usage</text>
+    <rect x="676" y="474" width="174" height="42" rx="21" fill="#f54a1a" fill-opacity=".24" stroke="#f54a1a" stroke-opacity=".52"/>
+    <path d="M701 501c-9-7-4-19 2-25 0 8 8 9 8 18 4-3 6-7 5-12 8 7 10 20 0 26-6 4-13 1-15-7z" fill="#ff5425"/>
+    <text x="724" y="501" fill="#ff5a2c" font-size="17" font-weight="720">26-day streak</text>
+
+    <!-- Usage totals -->
+    <rect x="68" y="540" width="782" height="72" rx="15" fill="#ffffff" fill-opacity=".035"/>
+    <line x1="328" y1="554" x2="328" y2="598" stroke="#ffffff" stroke-opacity=".13"/>
+    <line x1="589" y1="554" x2="589" y2="598" stroke="#ffffff" stroke-opacity=".13"/>
+    <text x="84" y="564" class="label" font-size="13">LAST DAY</text>
+    <text x="84" y="589" class="body" font-size="20">684.21M</text>
+    <text x="219" y="589" class="small" font-size="14">≈ $975.00</text>
+    <text x="344" y="564" class="label" font-size="13">7 DAYS</text>
+    <text x="344" y="589" class="body" font-size="20">3.63B</text>
+    <text x="442" y="589" class="small" font-size="14">≈ $5,172.90</text>
+    <text x="605" y="564" class="label" font-size="13">30 DAYS</text>
+    <text x="605" y="589" class="body" font-size="20">18.46B</text>
+    <text x="722" y="589" class="small" font-size="14">≈ $26,298.44</text>
+
+    <!-- Chart plot -->
+    <rect x="68" y="630" width="782" height="160" rx="15" fill="#168cff" fill-opacity=".035"/>
+    <line x1="84" y1="764" x2="834" y2="764" stroke="#ffffff" stroke-opacity=".08"/>
+    <g fill="#2d96ff" fill-opacity=".58">
+      <rect x="86" y="742" width="13" height="22" rx="3"/><rect x="111" y="735" width="13" height="29" rx="3"/>
+      <rect x="136" y="720" width="13" height="44" rx="3"/><rect x="161" y="730" width="13" height="34" rx="3"/>
+      <rect x="186" y="711" width="13" height="53" rx="3"/><rect x="211" y="697" width="13" height="67" rx="3"/>
+      <rect x="236" y="721" width="13" height="43" rx="3"/><rect x="261" y="688" width="13" height="76" rx="3"/>
+      <rect x="286" y="676" width="13" height="88" rx="3"/><rect x="311" y="706" width="13" height="58" rx="3"/>
+      <rect x="336" y="693" width="13" height="71" rx="3"/><rect x="361" y="665" width="13" height="99" rx="3"/>
+      <rect x="386" y="713" width="13" height="51" rx="3"/><rect x="411" y="684" width="13" height="80" rx="3"/>
+      <rect x="436" y="698" width="13" height="66" rx="3"/><rect x="461" y="670" width="13" height="94" rx="3"/>
+      <rect x="486" y="708" width="13" height="56" rx="3"/><rect x="511" y="650" width="13" height="114" rx="3"/>
+      <rect x="536" y="680" width="13" height="84" rx="3"/><rect x="561" y="702" width="13" height="62" rx="3"/>
+      <rect x="586" y="662" width="13" height="102" rx="3"/><rect x="611" y="689" width="13" height="75" rx="3"/>
+      <rect x="636" y="671" width="13" height="93" rx="3"/><rect x="661" y="639" width="13" height="125" rx="3"/>
+      <rect x="686" y="682" width="13" height="82" rx="3"/><rect x="711" y="655" width="13" height="109" rx="3"/>
+      <rect x="736" y="677" width="13" height="87" rx="3"/><rect x="761" y="647" width="13" height="117" rx="3"/>
+      <rect x="786" y="666" width="13" height="98" rx="3"/><rect x="811" y="632" width="13" height="132" rx="3"/>
+    </g>
+    <rect x="661" y="639" width="13" height="125" rx="3" fill="#54afff" fill-opacity="1"/>
+    <line x1="667.5" y1="638" x2="667.5" y2="764" stroke="#58b0ff" stroke-opacity=".62" stroke-dasharray="4 4"/>
+    <g filter="url(#tooltipShadow)">
+      <rect x="570" y="642" width="156" height="82" rx="12" fill="#353940" stroke="#ffffff" stroke-opacity=".12"/>
+      <text x="586" y="665" class="label" font-size="12">AUG 3</text>
+      <text x="586" y="689" fill="#f3f5f7" font-size="17" font-weight="720">684,210,342 tokens</text>
+      <text x="586" y="711" class="small" font-size="13">≈ $975.00</text>
+    </g>
+    <text x="84" y="784" class="quiet" font-size="12">JUL 11</text>
+    <text x="260" y="784" class="quiet" font-size="12">JUL 18</text>
+    <text x="436" y="784" class="quiet" font-size="12">JUL 25</text>
+    <text x="612" y="784" class="quiet" font-size="12">AUG 1</text>
+    <text x="836" y="784" text-anchor="end" class="quiet" font-size="12">AUG 8</text>
+
+    <text x="68" y="818" class="small" font-size="14">Avg 615.33M/day · Peak Aug 3, 684.21M</text>
+    <text x="850" y="818" text-anchor="end" class="small" font-size="14">Usage updated 12:18</text>
+
+    <!-- Model cards -->
+    <rect x="68" y="838" width="382" height="62" rx="13" fill="#ffffff" fill-opacity=".035"/>
+    <text x="86" y="861" class="label" font-size="12">CURRENT CONFIG</text>
+    <text x="86" y="885" class="body" font-size="17">gpt-5.6-sol</text>
+    <rect x="468" y="838" width="382" height="62" rx="13" fill="#ffffff" fill-opacity=".035"/>
+    <text x="486" y="861" class="label" font-size="12">TOP · 7D THREADS</text>
+    <text x="486" y="885" class="body" font-size="17">gpt-5.6-sol · 68%</text>
+
+    <path d="M74 928l8-8 8 8" fill="none" stroke="#2d96ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="101" y="931" fill="#d9dce1" font-size="15" font-weight="650">7-day pace</text>
+    <text x="206" y="931" class="small" font-size="15">18% more than previous 7 days</text>
+    <text x="68" y="958" class="small" font-size="13">ⓘ USD estimate · current-model basis</text>
+
+    <!-- Footer -->
+    <rect x="42" y="998" width="836" height="80" rx="22" fill="#292c31" class="hairline"/>
+    <text x="66" y="1030" fill="#ebedf0" font-size="19" font-weight="650">Auto Refresh</text>
+    <text x="66" y="1055" class="small" font-size="14">Background updates</text>
+    <rect x="224" y="1016" width="68" height="36" rx="18" fill="#2d96ff"/>
+    <circle cx="274" cy="1034" r="14" fill="#ffffff"/>
+    <rect x="592" y="1016" width="116" height="38" rx="11" fill="#ffffff" fill-opacity=".07" stroke="#ffffff" stroke-opacity=".1"/>
+    <text x="650" y="1041" text-anchor="middle" fill="#e8eaed" font-size="16" font-weight="650">↻ Refresh</text>
+    <rect x="720" y="1016" width="124" height="38" rx="11" fill="#ffffff" fill-opacity=".04"/>
+    <text x="782" y="1041" text-anchor="middle" class="small" font-size="16">⏻ Quit</text>
+
+    <text x="850" y="1091" text-anchor="end" fill="#6f737a" font-size="12" font-weight="600" letter-spacing=".7">EXAMPLE DATA</text>
+  </g>
+</svg>

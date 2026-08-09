@@ -41,3 +41,17 @@ func expectNil<Value>(
         "\(file):\(line): expected nil, got \(String(reflecting: actual))"
     )
 }
+
+func expectApproximately(
+    _ actual: Double,
+    _ expected: Double,
+    accuracy: Double = 0.000_001,
+    file: StaticString = #fileID,
+    line: UInt = #line
+) {
+    guard abs(actual - expected) > accuracy else { return }
+
+    TestRecorder.record(
+        "\(file):\(line): expected \(expected) ± \(accuracy), got \(actual)"
+    )
+}

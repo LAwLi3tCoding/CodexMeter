@@ -7,8 +7,16 @@
 CodexMeter is a native macOS menu bar app that shows the remaining quota reported by the locally installed OpenAI Codex CLI. It uses Swift, SwiftUI, and `MenuBarExtra`, stays out of the Dock, and refreshes without asking users to paste a token.
 
 <p align="center">
-  <img src="docs/assets/codexmeter-detail-panel.png" width="464" alt="CodexMeter detail panel showing five-hour and weekly Codex quota windows">
+  <img src="docs/assets/codexmeter-usage-dashboard.svg" width="460" alt="CodexMeter dashboard showing quota windows, thirty-day token usage, exact hover details, and model insights using example data">
 </p>
+
+## What's new in 0.4.0
+
+- A compact 30-day daily Token skyline with exact values on mouse hover.
+- Today or last-completed-day, 7-day, and 30-day totals with API-equivalent USD estimates.
+- Current model and the most-used model across threads started in the last seven days.
+- Seven-day pace, peak day, current streak, independent quota/usage refresh, and retained last-known-good data.
+- Optional credential-free loopback proxy support for local Codex App Server connectivity.
 
 ## Features
 
@@ -16,6 +24,11 @@ CodexMeter is a native macOS menu bar app that shows the remaining quota reporte
 - Menu bar quota selection prioritizes the advanced Codex model bucket over Spark-specific limits.
 - Reset countdowns in the dashboard and widgets use days, hours, and minutes, such as `3d2h5m`.
 - Multiple quota windows, including five-hour, weekly, and model-specific limits.
+- Compact weekly-quota treatment so long-window status stays visible without dominating the panel.
+- Exactly 30 local-calendar days of daily token usage in a native bar chart.
+- Today, 7-day, and 30-day token totals with an estimated standard-API equivalent cost in USD.
+- Current configured model plus the top model across threads started in the last seven days.
+- Seven-day pace, peak-day, and current-streak context alongside the chart.
 - Current Codex account type, masked account email, plan, and configured model.
 - Manual refresh and a low-CPU automatic refresh loop that defaults to 60 seconds.
 - macOS notifications at 50%, 30%, and 10% remaining, deduplicated per quota cycle.
@@ -48,7 +61,7 @@ To install a specific release or choose the destination:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/LAwLi3tCoding/CodexMeter/main/scripts/install.sh \
-  | CODEXMETER_VERSION=v0.3.2 CODEXMETER_INSTALL_DIR="$HOME/Applications" zsh
+  | CODEXMETER_VERSION=v0.4.0 CODEXMETER_INSTALL_DIR="$HOME/Applications" zsh
 ```
 
 Then launch CodexMeter:
@@ -59,7 +72,7 @@ open /Applications/CodexMeter.app
 
 Launch the containing app once so macOS can discover its widget extension. On macOS 14 or later, Control-click the desktop, choose **Edit Widgets**, search for **CodexMeter**, then add the small or medium widget. The same widget can be added to Notification Center on macOS 13 or later.
 
-Version 0.3.2 provides an Apple Silicon (`arm64`) binary. Intel Macs can build a native binary from source.
+Version 0.4.0 provides an Apple Silicon (`arm64`) binary. Intel Macs can build a native binary from source.
 
 ## Build from source
 
@@ -80,7 +93,7 @@ For a debug bundle:
 
 ## How quota access works
 
-CodexMeter launches one long-lived local helper process:
+CodexMeter launches two isolated local helper processes, one for quota and one for usage history:
 
 ```text
 codex app-server --listen stdio://
@@ -90,9 +103,18 @@ It initializes the documented newline-delimited App Server protocol and uses the
 
 - `account/read` for the active account type, email, and plan;
 - `account/rateLimits/read` for quota windows, usage percentages, and reset times;
+- `account/usage/read` for the account token-usage summary and daily usage buckets;
 - `config/read` for the effective configured model.
 
-The app decodes only the fields it needs, ignores unknown response fields, drains helper stderr without storing it, and never reads `~/.codex/auth.json`, Keychain tokens, Codex SQLite data, or private ChatGPT HTTP endpoints. Account responses and effective configuration are never logged.
+Keeping quota and usage in separate helpers prevents a timeout or restart in one request path from hiding data returned by the other. Both refresh concurrently and retain their own last successful result.
+
+The Network control in the panel can optionally pass a local HTTP(S) proxy to both helpers. For safety it accepts only loopback hosts (`localhost`, `127.0.0.1`, or `::1`) with an explicit port, stores no proxy credentials, and takes effect after CodexMeter restarts.
+
+The app decodes only the fields it needs, ignores unknown response fields, drains helper stderr without storing it, and never reads `~/.codex/auth.json`, Keychain tokens, raw prompt/response bodies, or private ChatGPT HTTP endpoints. Account responses and effective configuration are never logged.
+
+To approximate the top recent model, CodexMeter opens the local Codex `state_5.sqlite` database read-only and aggregates only `model`, cumulative `tokens_used`, and creation timestamps for threads started in the last seven days. It does not read thread titles, working directories, previews, prompts, responses, or credentials. Daily token totals remain sourced from `account/usage/read`; SQLite metadata is used only for this model ranking because the usage response does not include model attribution.
+
+USD values are estimates, not invoices. CodexMeter applies the published OpenAI standard API rates to a documented Codex workload mix of 14% uncached input, 85% cached input, and 1% output. Because the daily service buckets do not include model attribution, all historical tokens are priced using the currently configured model; switching models can make the estimate materially differ from actual API-equivalent cost. Subscription inclusion, Fast mode, long-context uplift, regional processing, tools, credits, taxes, and future pricing changes can also differ. See [OpenAI API pricing](https://developers.openai.com/api/docs/pricing).
 
 Subscription resolution trims blank values and prefers the root quota response, then the canonical `codex` quota bucket, then a plan shared by every other quota bucket. It falls back to account metadata when quota plans are absent or conflicting. The Codex `pro` quota tier is displayed as `PRO 20X`.
 
@@ -146,6 +168,13 @@ Run the optional integration smoke test against the installed, signed-in Codex C
 swift run CodexMeterTests --suite live
 ```
 
+Run the independent 30-day usage integration test as well. Direct access is used by default; on a machine that requires a local proxy, provide the same validated loopback URL used by the app:
+
+```bash
+CODEXMETER_LIVE_PROXY_URL=http://127.0.0.1:7897 \
+  swift run CodexMeterTests --suite live-usage
+```
+
 Build with compiler warnings treated as errors:
 
 ```bash
@@ -166,7 +195,7 @@ The executable test harness keeps local development compatible with Apple Comman
 ## Privacy and distribution
 
 - No credentials are stored by CodexMeter.
-- Settings contain only refresh preferences and notification-cycle state.
+- Settings contain only refresh preferences, an optional credential-free loopback proxy URL, and notification-cycle state.
 - The widget snapshot contains only provider, top-level model, update time, and quota `id`, `label`, `model`, remaining percentage, reset time, and window duration. It excludes account identifiers, plan metadata, and credentials.
 - Account identifiers are masked in the UI and are not stored in plaintext notification keys.
 - Notification permission denial never blocks quota display.
@@ -181,7 +210,9 @@ Release archives include the canonical MIT license and omit AppleDouble resource
 
 - ChatGPT Codex rate limits are displayed only when the installed CLI exposes them.
 - API-key accounts are identified, but OpenAI API billing and organization limits are not implemented.
-- Usage history and charts are planned extension points, not part of version 0.3.2.
+- Usage history requires a Codex CLI version that exposes `account/usage/read`; quota and usage refresh independently, so either last successful result remains visible when the other endpoint is unavailable.
+- The seven-day model ranking compares cumulative tokens in threads started during that period; it is an approximation because the local thread index does not expose turn-level model totals.
+- USD values are API-equivalent estimates and are not a replacement for an OpenAI invoice or ChatGPT subscription/credit statement.
 - Notifications require launching the assembled `.app` bundle so macOS has a bundle identity.
 - Widget updates are scheduled by macOS and cannot guarantee the menu app's one-minute refresh interval.
 

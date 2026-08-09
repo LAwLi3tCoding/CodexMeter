@@ -21,8 +21,72 @@ let codexAppServerClient: [HarnessTest] = [
         suite: "protocol",
         name: "Shutdown cancels a pending request without restarting",
         body: testShutdownDuringRequest
+    ),
+    HarnessTest(
+        suite: "protocol",
+        name: "App Server child receives an explicit process environment",
+        body: testExplicitProcessEnvironment
+    ),
+    HarnessTest(
+        suite: "protocol",
+        name: "App Server child does not inherit ambient proxy settings",
+        body: testAmbientProxyEnvironmentIsRemoved
     )
 ]
+
+private func testAmbientProxyEnvironmentIsRemoved() async throws {
+    let script = try makeFakeCodex(
+        body: #"""
+        while IFS= read -r line; do
+          id=$(printf '%s\n' "$line" | sed -n 's/.*"id":\([0-9][0-9]*\).*/\1/p')
+          case "$line" in
+            *'"method":"initialize"'*)
+              printf '{"id":%s,"result":{}}\n' "$id"
+              ;;
+            *includeLayers*)
+              printf '{"id":%s,"result":{"config":{"model":"%s|%s"}}}\n' "$id" "${HTTPS_PROXY:-unset}" "${ALL_PROXY:-unset}"
+              ;;
+          esac
+        done
+        """#
+    )
+    defer { try? FileManager.default.removeItem(at: script.deletingLastPathComponent()) }
+
+    let client = CodexAppServerClient(executableURL: script, requestTimeout: 2)
+    let config = try await client.effectiveConfig()
+    await client.shutdown()
+
+    expectEqual(config.config.model, "unset|unset")
+}
+
+private func testExplicitProcessEnvironment() async throws {
+    let script = try makeFakeCodex(
+        body: #"""
+        while IFS= read -r line; do
+          id=$(printf '%s\n' "$line" | sed -n 's/.*"id":\([0-9][0-9]*\).*/\1/p')
+          case "$line" in
+            *'"method":"initialize"'*)
+              printf '{"id":%s,"result":{}}\n' "$id"
+              ;;
+            *includeLayers*)
+              printf '{"id":%s,"result":{"config":{"model":"%s"}}}\n' "$id" "$HTTPS_PROXY"
+              ;;
+          esac
+        done
+        """#
+    )
+    defer { try? FileManager.default.removeItem(at: script.deletingLastPathComponent()) }
+
+    let client = CodexAppServerClient(
+        executableURL: script,
+        requestTimeout: 2,
+        processEnvironment: ["HTTPS_PROXY": "http://127.0.0.1:7897"]
+    )
+    let config = try await client.effectiveConfig()
+    await client.shutdown()
+
+    expectEqual(config.config.model, "http://127.0.0.1:7897")
+}
 
 private func testAppServerRoundTrip() async throws {
     let script = try makeFakeCodex(
@@ -41,6 +105,9 @@ private func testAppServerRoundTrip() async throws {
             *config*read*)
               printf '%s\n' '{"id":4,"result":{"config":{"model":"gpt-test"}}}'
               ;;
+            *usage*read*)
+              printf '%s\n' '{"id":5,"result":{"summary":{"currentStreakDays":2},"dailyUsageBuckets":[{"startDate":"2026-01-30","tokens":321}]}}'
+              ;;
           esac
         done
         """#
@@ -51,11 +118,14 @@ private func testAppServerRoundTrip() async throws {
     let account = try await client.account()
     let limits = try await client.rateLimits()
     let config = try await client.effectiveConfig()
+    let usage = try await client.tokenUsage()
     await client.shutdown()
 
     expectEqual(account.account?.email, "test@example.com")
     expectEqual(limits.rateLimits.primary?.usedPercent, 12)
     expectEqual(config.config.model, "gpt-test")
+    expectEqual(usage.summary.currentStreakDays, 2)
+    expectEqual(usage.dailyUsageBuckets?.first?.tokens, 321)
 }
 
 private func testAppServerError() async throws {

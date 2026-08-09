@@ -9,11 +9,11 @@ struct QuotaCardView: View {
     let presentation: QuotaCardPresentation
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 9) {
+        VStack(alignment: .leading, spacing: isCompact ? 4 : 5) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(presentation.title)
-                        .font(.headline)
+                        .font(.subheadline.weight(.semibold))
                         .lineLimit(1)
 
                     Text(presentation.modelText)
@@ -34,12 +34,16 @@ struct QuotaCardView: View {
 
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(presentation.percentageText)
-                    .font(.system(size: 32, weight: .semibold, design: .rounded))
+                    .font(.system(
+                        size: isCompact ? 19 : 22,
+                        weight: .semibold,
+                        design: .rounded
+                    ))
                     .monospacedDigit()
                     .foregroundStyle(accentColor)
 
                 Text("remaining")
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
             }
 
@@ -57,17 +61,15 @@ struct QuotaCardView: View {
                 Spacer(minLength: 4)
                 Label(presentation.countdownText, systemImage: "clock")
             }
-            .font(.caption)
+            .font(.caption2)
             .monospacedDigit()
-
-            Text(presentation.resetText)
-                .font(.caption2)
-                .monospacedDigit()
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .padding(13)
-        .frame(maxWidth: .infinity, minHeight: 164, alignment: .topLeading)
+        .padding(isCompact ? 8 : 9)
+        .frame(
+            maxWidth: .infinity,
+            minHeight: isCompact ? 88 : 98,
+            alignment: .topLeading
+        )
         .background {
             RoundedRectangle(cornerRadius: 15, style: .continuous)
                 .fill(Color(nsColor: .controlBackgroundColor))
@@ -83,6 +85,10 @@ struct QuotaCardView: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(presentation.accessibilityLabel)
         .accessibilityValue(statusDescription)
+    }
+
+    private var isCompact: Bool {
+        presentation.displayStyle == .compact
     }
 
     private var accentColor: Color {
@@ -135,10 +141,10 @@ private struct SegmentedQuotaGauge: View {
                                 .frame(width: proxy.size.width * fillAmounts[index])
                         }
                 }
-                .frame(height: 7)
+                .frame(height: 5)
             }
         }
-        .frame(height: 7)
+        .frame(height: 5)
         .accessibilityHidden(true)
     }
 }

@@ -26,6 +26,7 @@ public actor CodexAppServerClient: CodexClientProtocol {
 
     private let executableURL: URL
     private let requestTimeout: TimeInterval
+    private let processEnvironment: [String: String]
     private var process: Process?
     private var inputHandle: FileHandle?
     private var outputHandle: FileHandle?
@@ -40,17 +41,24 @@ public actor CodexAppServerClient: CodexClientProtocol {
     private var nextRequestID = 1
     private var pending: [Int: PendingRequest] = [:]
 
-    public init(executableURL: URL, requestTimeout: TimeInterval = 15) {
+    public init(
+        executableURL: URL,
+        requestTimeout: TimeInterval = 15,
+        processEnvironment: [String: String] = [:]
+    ) {
         self.executableURL = executableURL
         self.requestTimeout = requestTimeout
+        self.processEnvironment = processEnvironment
     }
 
     public init(
         locator: CodexExecutableLocator = CodexExecutableLocator(),
-        requestTimeout: TimeInterval = 15
+        requestTimeout: TimeInterval = 15,
+        processEnvironment: [String: String] = [:]
     ) throws {
         self.executableURL = try locator.locate()
         self.requestTimeout = requestTimeout
+        self.processEnvironment = processEnvironment
     }
 
     public func account() async throws -> CodexAccountResponse {
@@ -73,6 +81,13 @@ public actor CodexAppServerClient: CodexClientProtocol {
             CodexConfigResponse.self,
             method: "config/read",
             params: ["includeLayers": false]
+        )
+    }
+
+    public func tokenUsage() async throws -> CodexTokenUsageResponse {
+        try await request(
+            CodexTokenUsageResponse.self,
+            method: "account/usage/read"
         )
     }
 
@@ -220,6 +235,18 @@ public actor CodexAppServerClient: CodexClientProtocol {
 
         process.executableURL = executableURL
         process.arguments = ["app-server", "--listen", "stdio://"]
+        var environment = ProcessInfo.processInfo.environment
+        for key in [
+            "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY",
+            "http_proxy", "https_proxy", "all_proxy"
+        ] {
+            environment.removeValue(forKey: key)
+        }
+        environment.merge(
+            processEnvironment,
+            uniquingKeysWith: { _, configured in configured }
+        )
+        process.environment = environment
         process.standardInput = inputPipe
         process.standardOutput = outputPipe
         process.standardError = errorPipe

@@ -47,6 +47,13 @@ private func testWidgetSnapshotRoundTrip() throws {
     expectEqual(widget.quotas.first?.remainingPercent, 72)
     expectEqual(widget.quotas.first?.windowDurationMinutes, 300)
 
+    let restored = ProviderSnapshot(cachedWidgetSnapshot: widget)
+    expectEqual(restored.provider, providerSnapshot.provider)
+    expectEqual(restored.model, providerSnapshot.model)
+    expectEqual(restored.quotas.map(\.percentage), providerSnapshot.quotas.map(\.percentage))
+    expectNil(restored.account)
+    expectNil(restored.plan)
+
     let store = WidgetSnapshotStore(defaults: defaults)
     try store.write(widget)
 

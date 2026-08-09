@@ -17,6 +17,8 @@ enum TestMain {
 
         let selectedTests = if selectedSuite == "live" {
             TestRegistry.live
+        } else if selectedSuite == "live-usage" {
+            TestRegistry.liveUsage
         } else {
             TestRegistry.all.filter { test in
                 selectedSuite == nil || test.suite == selectedSuite

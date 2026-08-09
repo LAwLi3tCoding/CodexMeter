@@ -39,6 +39,11 @@ let quotaCardPresentation: [HarnessTest] = [
     ),
     HarnessTest(
         suite: "ui-presentation",
+        name: "Weekly quota receives compact visual emphasis",
+        body: testWeeklyQuotaDisplayStyle
+    ),
+    HarnessTest(
+        suite: "ui-presentation",
         name: "Panel header masks account metadata",
         body: testPanelHeaderFormatting
     ),
@@ -162,6 +167,18 @@ private func testQuotaGaugeAtOneHundred() {
 
     expectEqual(presentation.segmentFillAmounts.count, 10)
     expectEqual(presentation.segmentFillAmounts, Array(repeating: 1, count: 10))
+}
+
+private func testWeeklyQuotaDisplayStyle() {
+    let shortWindow = QuotaCardPresentation(
+        quota: makePresentationQuota(usedPercent: 20, windowDurationMinutes: 300)
+    )
+    let weeklyWindow = QuotaCardPresentation(
+        quota: makePresentationQuota(usedPercent: 20, windowDurationMinutes: 10_080)
+    )
+
+    expectEqual(shortWindow.displayStyle, .standard)
+    expectEqual(weeklyWindow.displayStyle, .compact)
 }
 
 private func testPanelHeaderFormatting() {
