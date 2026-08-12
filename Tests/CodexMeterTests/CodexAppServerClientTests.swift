@@ -29,10 +29,49 @@ let codexAppServerClient: [HarnessTest] = [
     ),
     HarnessTest(
         suite: "protocol",
+        name: "App Server child can resolve a sibling runtime from a GUI PATH",
+        body: testExecutableDirectoryIsAddedToChildPath
+    ),
+    HarnessTest(
+        suite: "protocol",
         name: "App Server child does not inherit ambient proxy settings",
         body: testAmbientProxyEnvironmentIsRemoved
     )
 ]
+
+private func testExecutableDirectoryIsAddedToChildPath() async throws {
+    let script = try makeFakeCodex(
+        body: #"""
+        case ":${PATH:-}:" in
+          *":$(dirname "$0"):"*) path_status="path-ready" ;;
+          *) path_status="path-missing" ;;
+        esac
+
+        while IFS= read -r line; do
+          id=$(printf '%s\n' "$line" | sed -n 's/.*"id":\([0-9][0-9]*\).*/\1/p')
+          case "$line" in
+            *'"method":"initialize"'*)
+              printf '{"id":%s,"result":{}}\n' "$id"
+              ;;
+            *includeLayers*)
+              printf '{"id":%s,"result":{"config":{"model":"%s"}}}\n' "$id" "$path_status"
+              ;;
+          esac
+        done
+        """#
+    )
+    defer { try? FileManager.default.removeItem(at: script.deletingLastPathComponent()) }
+
+    let client = CodexAppServerClient(
+        executableURL: script,
+        requestTimeout: 2,
+        processEnvironment: ["PATH": "/usr/bin:/bin:/usr/sbin:/sbin"]
+    )
+    let config = try await client.effectiveConfig()
+    await client.shutdown()
+
+    expectEqual(config.config.model, "path-ready")
+}
 
 private func testAmbientProxyEnvironmentIsRemoved() async throws {
     let script = try makeFakeCodex(
