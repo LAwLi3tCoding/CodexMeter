@@ -246,6 +246,16 @@ public actor CodexAppServerClient: CodexClientProtocol {
             processEnvironment,
             uniquingKeysWith: { _, configured in configured }
         )
+        let executableDirectory = executableURL.deletingLastPathComponent().path
+        let pathEntries = environment["PATH"]?
+            .split(separator: ":")
+            .map(String.init) ?? []
+        if !pathEntries.contains(executableDirectory) {
+            let currentPath = environment["PATH"] ?? ""
+            environment["PATH"] = currentPath.isEmpty
+                ? executableDirectory
+                : "\(executableDirectory):\(currentPath)"
+        }
         process.environment = environment
         process.standardInput = inputPipe
         process.standardOutput = outputPipe
