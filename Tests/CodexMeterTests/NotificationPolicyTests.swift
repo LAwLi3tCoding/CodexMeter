@@ -4,6 +4,11 @@ import CodexMeterCore
 let notificationPolicy: [HarnessTest] = [
     HarnessTest(
         suite: "notification",
+        name: "Quota alerts use every requested remaining threshold",
+        body: testRequestedThresholds
+    ),
+    HarnessTest(
+        suite: "notification",
         name: "Initial low observation emits only the most severe threshold",
         body: testInitialLowObservation
     ),
@@ -24,6 +29,10 @@ let notificationPolicy: [HarnessTest] = [
     )
 ]
 
+private func testRequestedThresholds() {
+    expectEqual(NotificationPolicy.thresholds, [70, 50, 30, 20, 10, 5, 1])
+}
+
 private func testInitialLowObservation() {
     let evaluation = NotificationPolicy().evaluate(
         previousRemainingPercentage: nil,
@@ -32,7 +41,7 @@ private func testInitialLowObservation() {
     )
 
     expectEqual(evaluation.decision?.threshold, 10)
-    expectEqual(evaluation.reachedThresholds, Set([50, 30, 10]))
+    expectEqual(evaluation.reachedThresholds, Set([70, 50, 30, 20, 10]))
 }
 
 private func testThresholdDeduplication() {

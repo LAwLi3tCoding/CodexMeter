@@ -29,7 +29,7 @@ public struct NotificationEvaluation: Equatable, Sendable {
 }
 
 public struct NotificationPolicy: Sendable {
-    public static let thresholds = [50, 30, 10]
+    public static let thresholds = [70, 50, 30, 20, 10, 5, 1]
 
     public init() {}
 
