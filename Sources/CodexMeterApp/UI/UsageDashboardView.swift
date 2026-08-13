@@ -178,7 +178,7 @@ struct UsageDashboardView: View {
             }
             .font(.caption2)
 
-            Label("USD estimate · current-model basis", systemImage: "info.circle")
+            Label("USD estimate · observed-model basis", systemImage: "exclamationmark.circle")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)

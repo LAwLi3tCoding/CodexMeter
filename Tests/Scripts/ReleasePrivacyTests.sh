@@ -51,7 +51,7 @@ assert_binary_is_private() {
 if ! package_output="$(
     CODEXMETER_SWIFT_SCRATCH_PATH="$SWIFT_SCRATCH_PATH" \
     CODEXMETER_OUTPUT_DIR="$OUTPUT_DIR" \
-    "$ROOT_DIR/scripts/package-release.sh" v0.4.2 2>&1
+    "$ROOT_DIR/scripts/package-release.sh" v0.4.3 2>&1
 )"; then
   print -r -- "$package_output" >&2
   fail "release packaging failed"

@@ -9,7 +9,7 @@ public struct OpenAIStandardPricingCatalog: Sendable {
 
     public static let pricingVersion = "2026-08-08"
     public static let estimationNote =
-        "API-equivalent estimate using standard rates (Aug 8, 2026), the current configured model for all historical tokens, and a 14% input, 85% cached-input, 1% output Codex workload mix. Subscription charges may differ."
+        "API-equivalent estimate using standard rates (Aug 8, 2026), model weights observed from local thread token metadata for each period, and a 14% input, 85% cached-input, 1% output Codex workload mix. Thread attribution is approximate; subscription charges may differ."
 
     public init() {}
 

@@ -10,9 +10,10 @@ CodexMeter is a native macOS menu bar app that shows the remaining quota reporte
   <img src="docs/assets/codexmeter-usage-dashboard.svg" width="460" alt="CodexMeter dashboard showing quota windows, thirty-day token usage, exact hover details, and model insights using example data">
 </p>
 
-## What's new in 0.4.2
+## What's new in 0.4.3
 
-- Release packaging no longer leaves a second CodexMeter app registered from the repository build directory.
+- USD estimates now weight each displayed period by the models observed in local thread metadata.
+- The estimate label uses a warning icon whose hover text explains the calculation and limitations.
 
 ## Features
 
@@ -57,7 +58,7 @@ To install a specific release or choose the destination:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/LAwLi3tCoding/CodexMeter/main/scripts/install.sh \
-  | CODEXMETER_VERSION=v0.4.2 CODEXMETER_INSTALL_DIR="$HOME/Applications" zsh
+  | CODEXMETER_VERSION=v0.4.3 CODEXMETER_INSTALL_DIR="$HOME/Applications" zsh
 ```
 
 Then launch CodexMeter:
@@ -68,7 +69,7 @@ open /Applications/CodexMeter.app
 
 Launch the containing app once so macOS can discover its widget extension. On macOS 14 or later, Control-click the desktop, choose **Edit Widgets**, search for **CodexMeter**, then add the small or medium widget. The same widget can be added to Notification Center on macOS 13 or later.
 
-Version 0.4.2 provides an Apple Silicon (`arm64`) binary. Intel Macs can build a native binary from source.
+Version 0.4.3 provides an Apple Silicon (`arm64`) binary. Intel Macs can build a native binary from source.
 
 ## Build from source
 
@@ -110,7 +111,7 @@ The app decodes only the fields it needs, ignores unknown response fields, drain
 
 To approximate the top recent model, CodexMeter opens the local Codex `state_5.sqlite` database read-only and aggregates only `model`, cumulative `tokens_used`, and creation timestamps for threads started in the last seven days. It does not read thread titles, working directories, previews, prompts, responses, or credentials. Daily token totals remain sourced from `account/usage/read`; SQLite metadata is used only for this model ranking because the usage response does not include model attribution.
 
-USD values are estimates, not invoices. CodexMeter applies the published OpenAI standard API rates to a documented Codex workload mix of 14% uncached input, 85% cached input, and 1% output. Because the daily service buckets do not include model attribution, all historical tokens are priced using the currently configured model; switching models can make the estimate materially differ from actual API-equivalent cost. Subscription inclusion, Fast mode, long-context uplift, regional processing, tools, credits, taxes, and future pricing changes can also differ. See [OpenAI API pricing](https://developers.openai.com/api/docs/pricing).
+USD values are estimates, not invoices. CodexMeter weights published OpenAI standard API rates by the model-token mix observed in local thread metadata for each displayed period, then applies a documented Codex workload mix of 14% uncached input, 85% cached input, and 1% output. Thread metadata is cumulative and grouped by thread creation day, so attribution remains approximate. Subscription inclusion, Fast mode, long-context uplift, regional processing, tools, credits, taxes, and future pricing changes can also differ. See [OpenAI API pricing](https://developers.openai.com/api/docs/pricing).
 
 Subscription resolution trims blank values and prefers the root quota response, then the canonical `codex` quota bucket, then a plan shared by every other quota bucket. It falls back to account metadata when quota plans are absent or conflicting. The Codex `pro` quota tier is displayed as `PRO 20X`.
 

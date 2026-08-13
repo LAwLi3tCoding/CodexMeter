@@ -74,6 +74,10 @@ grep -Fq 'UsageHoverCard(day: hoveredDay)' "$USAGE_DASHBOARD_FILE" \
   || fail "the chart hover state must render exact token details"
 grep -Fq 'Hover a bar for exact tokens' "$USAGE_DASHBOARD_FILE" \
   || fail "the chart must visibly advertise its exact-value hover affordance"
+grep -Fq 'Label("USD estimate · observed-model basis", systemImage: "exclamationmark.circle")' "$USAGE_DASHBOARD_FILE" \
+  || fail "the estimate must expose its observed-model basis with a warning icon"
+grep -Fq '.help(presentation.estimationNote)' "$USAGE_DASHBOARD_FILE" \
+  || fail "the estimate warning icon must explain its calculation on hover"
 grep -Fq 'streakAccent = Color(red: 0.96, green: 0.29, blue: 0.10)' "$USAGE_DASHBOARD_FILE" \
   || fail "the streak badge must use the requested orange-red accent"
 grep -Fq '.fill(streakAccent.opacity(0.24))' "$USAGE_DASHBOARD_FILE" \

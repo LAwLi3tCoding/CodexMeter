@@ -58,6 +58,7 @@ public struct CodexUsageProvider: UsageProviding, Sendable {
             dailyUsageBuckets.map { ($0.startDate, max(0, $0.tokens)) },
             uniquingKeysWith: +
         )
+        let modelUsageByDay = Dictionary(grouping: modelUsage, by: \.dayID)
         let formatter = dayFormatter()
 
         let days = (0..<30).compactMap { offset -> UsageDay? in
@@ -70,9 +71,10 @@ public struct CodexUsageProvider: UsageProviding, Sendable {
                 dayID: dayID,
                 date: day,
                 tokens: tokens,
-                estimatedCostUSD: currentModel.flatMap { model in
-                    pricing.estimatedCostUSD(tokens: tokens, model: model)
-                }
+                estimatedCostUSD: modelWeightedEstimate(
+                    tokens: tokens,
+                    usage: modelUsageByDay[dayID] ?? []
+                )
             )
         }
 
@@ -96,8 +98,14 @@ public struct CodexUsageProvider: UsageProviding, Sendable {
             sevenDayTokens: sevenDayTokens,
             thirtyDayTokens: tokenTotal(days),
             todayEstimatedCostUSD: primaryDayUsage?.estimatedCostUSD,
-            sevenDayEstimatedCostUSD: estimatedCostTotal(sevenDays),
-            thirtyDayEstimatedCostUSD: estimatedCostTotal(days),
+            sevenDayEstimatedCostUSD: modelWeightedEstimate(
+                tokens: sevenDayTokens,
+                usage: sevenDayModelUsage
+            ),
+            thirtyDayEstimatedCostUSD: modelWeightedEstimate(
+                tokens: tokenTotal(days),
+                usage: modelUsage
+            ),
             currentModel: currentModel,
             topModelSevenDays: topModel?.model,
             topModelSevenDayShare: topModel?.share,
@@ -145,11 +153,24 @@ public struct CodexUsageProvider: UsageProviding, Sendable {
         days.reduce(Int64(0)) { $0 + $1.tokens }
     }
 
-    private func estimatedCostTotal(_ days: [UsageDay]) -> Double? {
-        guard !days.contains(where: { $0.tokens > 0 && $0.estimatedCostUSD == nil }) else {
-            return nil
+    private func modelWeightedEstimate(
+        tokens: Int64,
+        usage: [ModelTokenUsage]
+    ) -> Double? {
+        guard tokens > 0 else { return 0 }
+        let totals = Dictionary(grouping: usage.filter { $0.tokens > 0 }, by: \.model)
+            .mapValues { records in records.reduce(Int64(0)) { $0 + $1.tokens } }
+        let observedTokens = totals.values.reduce(Int64(0), +)
+        guard observedTokens > 0 else { return nil }
+
+        var observedCost = 0.0
+        for (model, modelTokens) in totals {
+            guard let cost = pricing.estimatedCostUSD(tokens: modelTokens, model: model) else {
+                return nil
+            }
+            observedCost += cost
         }
-        return days.compactMap(\.estimatedCostUSD).reduce(0, +)
+        return observedCost * Double(tokens) / Double(observedTokens)
     }
 
     private func change(current: Int64, previous: Int64) -> Double? {

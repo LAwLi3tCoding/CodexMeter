@@ -35,6 +35,11 @@ let usageDashboard: [HarnessTest] = [
     ),
     HarnessTest(
         suite: "usage-dashboard",
+        name: "USD estimates use observed model weights for each period",
+        body: testObservedModelWeightedPricing
+    ),
+    HarnessTest(
+        suite: "usage-dashboard",
         name: "Standard pricing produces an explicit blended estimate",
         body: testBlendedPricing
     ),
@@ -246,6 +251,42 @@ private func testSevenDayTopModel() async throws {
     expectApproximately(snapshot.topModelSevenDayShare ?? 0, 0.6)
 }
 
+private func testObservedModelWeightedPricing() async throws {
+    let calendar = utcCalendar()
+    let now = calendar.date(from: DateComponents(year: 2026, month: 1, day: 30, hour: 12))!
+    let provider = CodexUsageProvider(
+        client: StubUsageClient(
+            response: CodexTokenUsageResponse(
+                summary: CodexTokenUsageSummary(),
+                dailyUsageBuckets: [
+                    CodexTokenUsageDailyBucket(startDate: "2026-01-20", tokens: 1_000_000),
+                    CodexTokenUsageDailyBucket(startDate: "2026-01-29", tokens: 1_000_000),
+                    CodexTokenUsageDailyBucket(startDate: "2026-01-30", tokens: 1_000_000)
+                ]
+            ),
+            configFails: true
+        ),
+        modelUsageReader: StubModelUsageReader(records: [
+            ModelTokenUsage(dayID: "2026-01-20", model: "gpt-5.6-luna", tokens: 100),
+            ModelTokenUsage(dayID: "2026-01-29", model: "gpt-5.6-sol", tokens: 600),
+            ModelTokenUsage(dayID: "2026-01-30", model: "gpt-5.6-terra", tokens: 400)
+        ]),
+        now: { now },
+        calendar: calendar
+    )
+
+    let snapshot = try await provider.fetchUsage()
+
+    expectNil(snapshot.currentModel)
+    expectApproximately(snapshot.todayEstimatedCostUSD ?? 0, 0.57)
+    expectApproximately(snapshot.sevenDayEstimatedCostUSD ?? 0, 2.166)
+    expectApproximately(snapshot.thirtyDayEstimatedCostUSD ?? 0, 2.969_181_818)
+    expectApproximately(
+        snapshot.days.first { $0.dayID == "2026-01-20" }?.estimatedCostUSD ?? 0,
+        0.057
+    )
+}
+
 private func testBlendedPricing() {
     let catalog = OpenAIStandardPricingCatalog()
 
@@ -332,6 +373,9 @@ private func testModelAttributionFailure() async throws {
     let presentation = UsageDashboardPresentation(snapshot: snapshot, calendar: calendar)
 
     expectEqual(snapshot.modelAttributionAvailable, false)
+    expectNil(snapshot.todayEstimatedCostUSD)
+    expectNil(snapshot.sevenDayEstimatedCostUSD)
+    expectNil(snapshot.thirtyDayEstimatedCostUSD)
     expectEqual(presentation.topModelText, "Unavailable")
 }
 

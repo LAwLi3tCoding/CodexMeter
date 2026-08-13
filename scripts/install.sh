@@ -13,7 +13,7 @@ Usage:
 
 Environment variables:
   CODEXMETER_INSTALL_DIR          Destination directory (default: /Applications or ~/Applications)
-  CODEXMETER_VERSION              Release tag such as v0.4.2 (default: latest)
+  CODEXMETER_VERSION              Release tag such as v0.4.3 (default: latest)
   CODEXMETER_GITHUB_REPOSITORY    GitHub owner/repository override
 EOF
 }
