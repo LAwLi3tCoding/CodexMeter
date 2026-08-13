@@ -187,6 +187,7 @@ test_packages_matching_app_version() {
   PATH="$bin_dir:$PATH" \
   zsh "$PACKAGE_SCRIPT" v0.1.0 >/dev/null
 
+  [[ -d "$app_dir" ]] || fail "packager removed the caller-provided app"
   [[ -f "$asset" ]] || fail "release archive was not created"
   [[ -f "$asset.sha256" ]] || fail "checksum file was not created"
   (

@@ -8,7 +8,7 @@ usage() {
 Create CodexMeter GitHub Release assets.
 
 Usage:
-  ./scripts/package-release.sh v0.4.1
+  ./scripts/package-release.sh v0.4.2
 
 Environment variables:
   CODEXMETER_APP_PATH     Package an existing CodexMeter.app instead of building it
@@ -32,9 +32,11 @@ readonly OUTPUT_DIR="${CODEXMETER_OUTPUT_DIR:-$ROOT_DIR/dist}"
 
 if [[ -n "${CODEXMETER_APP_PATH:-}" ]]; then
   readonly APP_DIR="$CODEXMETER_APP_PATH"
+  readonly REMOVE_APP_AFTER_PACKAGING=0
 else
   "$ROOT_DIR/scripts/build-app.sh" release
   readonly APP_DIR="$ROOT_DIR/build/CodexMeter.app"
+  readonly REMOVE_APP_AFTER_PACKAGING=1
 fi
 
 readonly INFO_PLIST="$APP_DIR/Contents/Info.plist"
@@ -214,6 +216,12 @@ ditto -c -k --norsrc --keepParent "$APP_DIR" "$ASSET_PATH"
   cd "$OUTPUT_DIR"
   shasum -a 256 "$ASSET_NAME" > "$ASSET_NAME.sha256"
 )
+
+if [[ "$REMOVE_APP_AFTER_PACKAGING" == "1" ]]; then
+  readonly LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
+  [[ ! -x "$LSREGISTER" ]] || "$LSREGISTER" -u "$APP_DIR" >/dev/null 2>&1 || true
+  rm -rf "$APP_DIR"
+fi
 
 echo "Created $ASSET_PATH"
 echo "Created $CHECKSUM_PATH"

@@ -2,10 +2,6 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
-APP_DIR="$ROOT_DIR/build/CodexMeter.app"
-APP_EXECUTABLE="$APP_DIR/Contents/MacOS/CodexMeter"
-WIDGET_EXECUTABLE="$APP_DIR/Contents/PlugIns/CodexMeterWidget.appex/Contents/MacOS/CodexMeterWidget"
-BUNDLED_LICENSE="$APP_DIR/Contents/Resources/LICENSE"
 TEST_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/codexmeter-release-privacy-tests.XXXXXX")"
 OUTPUT_DIR="$TEST_ROOT/dist"
 EXTRACT_DIR="$TEST_ROOT/extracted"
@@ -55,7 +51,7 @@ assert_binary_is_private() {
 if ! package_output="$(
     CODEXMETER_SWIFT_SCRATCH_PATH="$SWIFT_SCRATCH_PATH" \
     CODEXMETER_OUTPUT_DIR="$OUTPUT_DIR" \
-    "$ROOT_DIR/scripts/package-release.sh" v0.4.1 2>&1
+    "$ROOT_DIR/scripts/package-release.sh" v0.4.2 2>&1
 )"; then
   print -r -- "$package_output" >&2
   fail "release packaging failed"
@@ -82,14 +78,8 @@ release_assets=("$OUTPUT_DIR"/CodexMeter-macOS-*.zip(N))
 (( ${#release_assets} == 1 )) || fail "expected exactly one architecture-specific release archive"
 ASSET_PATH="${release_assets[1]}"
 
-[[ -x "$APP_EXECUTABLE" ]] || fail "missing app executable"
-[[ -x "$WIDGET_EXECUTABLE" ]] || fail "missing widget executable"
-[[ -f "$BUNDLED_LICENSE" ]] || fail "app bundle is missing LICENSE"
-cmp -s "$ROOT_DIR/LICENSE" "$BUNDLED_LICENSE" \
-  || fail "app bundle LICENSE differs from the project LICENSE"
-
-assert_binary_is_private "$APP_EXECUTABLE" "CodexMeter"
-assert_binary_is_private "$WIDGET_EXECUTABLE" "CodexMeterWidget"
+[[ ! -e "$ROOT_DIR/build/CodexMeter.app" ]] \
+  || fail "release packaging left a duplicate app bundle in build/"
 
 [[ -f "$ASSET_PATH" ]] || fail "release archive was not created"
 [[ -f "$ASSET_PATH.sha256" ]] || fail "release checksum was not created"

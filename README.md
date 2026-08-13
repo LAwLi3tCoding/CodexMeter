@@ -10,10 +10,9 @@ CodexMeter is a native macOS menu bar app that shows the remaining quota reporte
   <img src="docs/assets/codexmeter-usage-dashboard.svg" width="460" alt="CodexMeter dashboard showing quota windows, thirty-day token usage, exact hover details, and model insights using example data">
 </p>
 
-## What's new in 0.4.1
+## What's new in 0.4.2
 
-- Quota alerts at 70%, 50%, 30%, 20%, 10%, 5%, and 1% remaining.
-- GUI launches preserve the resolved Codex runtime path so helper discovery matches terminal launches.
+- Release packaging no longer leaves a second CodexMeter app registered from the repository build directory.
 
 ## Features
 
@@ -58,7 +57,7 @@ To install a specific release or choose the destination:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/LAwLi3tCoding/CodexMeter/main/scripts/install.sh \
-  | CODEXMETER_VERSION=v0.4.1 CODEXMETER_INSTALL_DIR="$HOME/Applications" zsh
+  | CODEXMETER_VERSION=v0.4.2 CODEXMETER_INSTALL_DIR="$HOME/Applications" zsh
 ```
 
 Then launch CodexMeter:
@@ -69,7 +68,7 @@ open /Applications/CodexMeter.app
 
 Launch the containing app once so macOS can discover its widget extension. On macOS 14 or later, Control-click the desktop, choose **Edit Widgets**, search for **CodexMeter**, then add the small or medium widget. The same widget can be added to Notification Center on macOS 13 or later.
 
-Version 0.4.1 provides an Apple Silicon (`arm64`) binary. Intel Macs can build a native binary from source.
+Version 0.4.2 provides an Apple Silicon (`arm64`) binary. Intel Macs can build a native binary from source.
 
 ## Build from source
 
